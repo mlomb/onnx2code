@@ -5,4 +5,5 @@
         "**/.ipynb_checkpoints/": true,
     },
     "editor.tabSize": 4,
+    "python.formatting.provider": "black",
 }
