@@ -1,0 +1,8 @@
+{
+    "files.exclude": {
+        ".git/": true,
+        "**/__pycache__/": true,
+        "**/.ipynb_checkpoints/": true,
+    },
+    "editor.tabSize": 4,
+}
