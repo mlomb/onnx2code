@@ -16,7 +16,7 @@ class Tensor:
 
 def parse_value(
     value_info: onnx.ValueInfoProto,
-    tag: str or None,
+    tag: str | None,
     var_index: int,
     model_proto: onnx.ModelProto,
 ) -> Tensor:
