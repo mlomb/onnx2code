@@ -1,7 +1,4 @@
-import numpy as np
 import onnx
-import onnxsim.onnx_simplifier as onnx_simplifier
-from .ops import Operation
 from .tensor import parse_tensors
 
 
