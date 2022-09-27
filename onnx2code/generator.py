@@ -4,6 +4,7 @@ import onnxsim.onnx_simplifier as onnx_simplifier
 from .ops import Operation
 from .tensor import parse_tensors
 
+
 class Generator:
     """
     Code generator

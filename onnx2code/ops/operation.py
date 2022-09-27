@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
-class Operation(ABC):
 
+class Operation(ABC):
     def __init__(self, node):
         self.node = node
         self.asserts()
@@ -18,5 +18,5 @@ class Operation(ABC):
 
 
 def register_op(cls, node_type: str, variant: str):
-    print (f"Registering {cls} for {node_type} and {variant}")
+    print(f"Registering {cls} for {node_type} and {variant}")
     return cls
