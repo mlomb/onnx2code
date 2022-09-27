@@ -1,2 +1,8 @@
+# Cache files
+.mypy_cache/
 .ipynb_checkpoints/
 __pycache__/
+
+# Virtual environments
+Pipfile
+Pipfile.lock
