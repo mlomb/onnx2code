@@ -8,7 +8,7 @@ class Identity(Operation):
     https://github.com/onnx/onnx/blob/main/docs/Operators.md#identity
     """
 
-    nodes_type = ["Identity"]
+    node_types = ["Identity"]
 
     def asserts(self):
         assert len(self.inputs) == 1, "expected one input"
@@ -18,9 +18,8 @@ class Identity(Operation):
         ), "input and output tensors should have the same size"
 
 
+@Identity.variant("cpp")
 class IdentityCPP(Identity):
-    variant = "cpp"
-
     def generate(self, gen):
         gen.add_c_block(
             """
@@ -36,8 +35,7 @@ class IdentityCPP(Identity):
         )
 
 
+@Identity.variant("asm")
 class IdentityASM(Identity):
-    variant = "asm"
-
     def generate(self):
         print("ASM variant called")
