@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+from collections.abc import Generator
+from typing import Callable
 
 
 class Operation(ABC):
@@ -10,12 +12,12 @@ class Operation(ABC):
         self.asserts()
 
     @abstractmethod
-    def asserts(self):
+    def asserts(self) -> None:
         pass
 
     @classmethod
-    def variant(cls, name: str):
-        def decorator(newcls: type[Operation]):
+    def variant(cls, name: str) -> Callable[[type["Operation"]], type["Operation"]]:
+        def decorator(newcls: type[Operation]) -> type[Operation]:
             newcls.node_types = cls.node_types
             newcls.variant_name = name
             return newcls
@@ -23,7 +25,9 @@ class Operation(ABC):
         return decorator
 
     @classmethod
-    def get_subclasses(cls):
+    def get_subclasses(
+        cls: type["Operation"],
+    ) -> Generator[type["Operation"], None, None]:
         for subclass in cls.__subclasses__():
             yield from subclass.get_subclasses()
             yield subclass
