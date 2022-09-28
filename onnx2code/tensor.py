@@ -1,7 +1,11 @@
-from functools import reduce
-import onnx
-import numpy as np
+import operator
 from dataclasses import dataclass
+from functools import reduce
+
+import numpy as np
+import onnx
+from numpy.typing import NDArray
+
 from .util import get_model_inputs, get_shape_from_value_info_proto
 
 
@@ -11,7 +15,7 @@ class TensorInfo:
     tag: str | None
     shape: list[int]
     size: int
-    data: np.ndarray | None
+    data: NDArray[np.float64] | None
     variable: str
 
     @staticmethod
@@ -20,13 +24,13 @@ class TensorInfo:
         tag: str | None,
         var_index: int,
         model_proto: onnx.ModelProto,
-    ):
+    ) -> "TensorInfo":
         """
         Parses a ValueInfo and returns the tensor
         """
         name = value_info.name
         shape = get_shape_from_value_info_proto(value_info)
-        data = None
+        data: NDArray[np.float64] | None = None
 
         for node in model_proto.graph.node:
             if node.op_type == "Constant" and node.output[0] == name:
@@ -36,24 +40,24 @@ class TensorInfo:
             name=name,
             tag=tag,
             shape=shape,
-            size=reduce(lambda x, y: x * y, shape, 1),
+            size=reduce(operator.mul, shape, 1),
             data=data,
             variable=f"T{var_index}",
         )
 
     @staticmethod
-    def from_initializer(initializer: onnx.TensorProto, var_index: int):
+    def from_initializer(initializer: onnx.TensorProto, var_index: int) -> "TensorInfo":
         """
         Parses a TensorProto and returns the tensor
         """
         shape = [dim for dim in initializer.dims]
-        data = onnx.numpy_helper.to_array(initializer)
+        data: NDArray[np.float64] = onnx.numpy_helper.to_array(initializer)
         assert list(data.shape) == shape, "Tensor shape and data shape should match"
         return TensorInfo(
             name=initializer.name,
             tag=None,
             shape=shape,
-            size=reduce(lambda x, y: x * y, shape, 1),
+            size=reduce(operator.mul, shape, 1),
             data=data,
             variable=f"T{var_index}",
         )
