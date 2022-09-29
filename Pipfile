@@ -1,0 +1,20 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+numpy = "*"
+onnx = "*"
+onnx-simplifier = "*"
+onnxruntime = "*"
+pytest = "*"
+tensorflow = "*"
+tf2onnx = "*"
+
+[dev-packages]
+mypy = "*"
+flake8 = "*"
+
+[requires]
+python_version = "3.10"
