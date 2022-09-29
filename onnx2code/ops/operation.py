@@ -1,5 +1,5 @@
-from abc import ABC, abstractmethod
 import collections.abc
+from abc import ABC, abstractmethod
 from typing import Callable
 
 import onnx
