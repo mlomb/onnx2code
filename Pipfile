@@ -10,7 +10,7 @@ onnx-simplifier = "*"
 onnxruntime = "*"
 pytest = "*"
 tensorflow = "*"
-tf2onnx = "*"
+tf2onnx = ">=1.12"
 
 [dev-packages]
 mypy = "*"
