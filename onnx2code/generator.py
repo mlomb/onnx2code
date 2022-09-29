@@ -11,8 +11,12 @@ class Generator:
     """
 
     def __init__(self, model_proto: onnx.ModelProto):
+        from .ops.operation import Operation
+
         self.model_proto = model_proto
         self.tensors = {tensor.name: tensor for tensor in parse_tensors(model_proto)}
+        for node in self.model_proto.graph.node:
+            Operation.get(node.op_type, ["asm"])(self, node)
 
     def weld_tensors(self, name_from: str, name_to: str) -> None:
         """
@@ -25,3 +29,11 @@ class Generator:
         """
 
         self.tensors[name_from].variable = self.tensors[name_to].variable
+
+    def generate(self) -> str:
+        """
+        Generate code
+        """
+        print("Generating code")
+
+        return ""

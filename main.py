@@ -1,7 +1,11 @@
-import onnx
+import tf2onnx
+import tensorflow as tf
 from onnx2code.generator import Generator
 
-model_proto = onnx.load("mnist-1.onnx")
+inputs = tf.keras.Input([1])
+outputs = tf.keras.layers.Lambda(lambda x: x)(inputs)
+model = tf.keras.Model(inputs=[inputs], outputs=[outputs])
 
-for t in Generator(model_proto).tensors:
-    print(t)
+model_proto, _ = tf2onnx.convert.from_keras(model)
+
+Generator(model_proto).generate()

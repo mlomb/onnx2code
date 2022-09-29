@@ -9,7 +9,7 @@ class Identity(Operation):
     https://github.com/onnx/onnx/blob/main/docs/Operators.md#identity
     """
 
-    node_types = ["Identity"]
+    node_types = {"Identity"}
 
     def asserts(self) -> None:
         assert len(self.inputs) == 1, "expected one input"
@@ -21,7 +21,7 @@ class Identity(Operation):
 
 @Identity.variant("cpp")
 class IdentityCPP(Identity):
-    def generate(self, gen: Generator) -> None:
+    def emit(self, gen: Generator) -> None:
         gen.add_c_block(
             """
         template<typename T, unsigned int SIZE>
@@ -32,11 +32,11 @@ class IdentityCPP(Identity):
         )
 
         gen.add_call(
-            f"""Identity<float, {input["size"]}>""", self.inputs[0], self.outputs[0]
+            f"""Identity<float, {self.inputs}>""", self.inputs[0], self.outputs[0]
         )
 
 
 @Identity.variant("asm")
 class IdentityASM(Identity):
-    def generate(self, gen: Generator) -> None:
+    def emit(self, gen: Generator) -> None:
         print("ASM variant called")

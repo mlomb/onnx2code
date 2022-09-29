@@ -1,4 +1,3 @@
-import collections.abc
 from abc import ABC, abstractmethod
 from typing import Callable
 
@@ -8,11 +7,15 @@ from ..generator import Generator
 
 
 class Operation(ABC):
-    node_types: list[str]
+    node_types: set[str]
     variant_name: str | None = None
+    variants: dict[str, type["Operation"]] = {}
+    _registry: dict[str, type["Operation"]] = {}
 
-    def __init__(self, node: onnx.NodeProto):
+    def __init__(self, gen: Generator, node: onnx.NodeProto):
         self.node = node
+        self.inputs = [gen.tensors[name] for name in node.input]
+        self.outputs = [gen.tensors[name] for name in node.output]
         self.asserts()
 
     @abstractmethod
@@ -20,7 +23,7 @@ class Operation(ABC):
         pass
 
     @abstractmethod
-    def generate(self, gen: Generator) -> None:
+    def emit(self, gen: Generator) -> None:
         pass
 
     @classmethod
@@ -28,14 +31,28 @@ class Operation(ABC):
         def decorator(newcls: type[Operation]) -> type[Operation]:
             newcls.node_types = cls.node_types
             newcls.variant_name = name
+            cls.variants[name] = newcls
+
             return newcls
 
         return decorator
 
-    @classmethod
-    def get_subclasses(
-        cls: type["Operation"],
-    ) -> collections.abc.Generator[type["Operation"], None, None]:
-        for subclass in cls.__subclasses__():
-            yield from subclass.get_subclasses()
-            yield subclass
+    def __init_subclass__(cls) -> None:
+        if cls.variant_name is None:
+            for node_type in cls.node_types:
+                Operation._registry[node_type] = cls
+
+    @staticmethod
+    def get(node_type: str, variant: list[str]) -> type["Operation"]:
+        if node_type not in Operation._registry:
+            raise NotImplementedError(f"Operation {node_type} not implemented")
+
+        basecls = Operation._registry[node_type]
+
+        for variant_name in variant:
+            return basecls.variants[variant_name]
+
+        if len(basecls.variants) > 0:
+            raise ValueError(f"No valid variant found for {node_type}")
+
+        return basecls
