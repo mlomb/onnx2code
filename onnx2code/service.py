@@ -2,6 +2,7 @@ import tempfile
 from pathlib import Path
 from subprocess import call
 from typing import Any
+from multiprocessing import shared_memory
 
 import numpy as np
 import numpy.typing as npt
@@ -89,6 +90,13 @@ class ModelService:
         pass
 
     def _boot(self) -> None:
+        self.shm_inputs = shared_memory.SharedMemory(
+            "/onnx2code-inputs", create=True, size=5
+        )
+        self.shm_outputs = shared_memory.SharedMemory(
+            "/onnx2code-outputs", create=True, size=5
+        )
+
         pass
 
     def inference(
@@ -98,5 +106,9 @@ class ModelService:
         return []
 
     def __exit__(self, _1: Any, _2: Any, _3: Any) -> None:
+        # remove compilation files
         self.temp_dir.cleanup()
-        pass
+
+        # release
+        self.shm_inputs.unlink()
+        self.shm_outputs.unlink()
