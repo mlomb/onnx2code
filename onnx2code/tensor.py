@@ -24,7 +24,7 @@ class TensorInfo:
     tag: str | None
     shape: list[int]
     size: int
-    data: NDArray[np.float64] | None
+    data: NDArray[np.float32] | None
     variable: str
 
     @staticmethod
@@ -39,7 +39,7 @@ class TensorInfo:
         """
         name = value_info.name
         shape = _get_shape_from_value_info_proto(value_info)
-        data: NDArray[np.float64] | None = None
+        data: NDArray[np.float32] | None = None
 
         for node in model_proto.graph.node:
             if node.op_type == "Constant" and node.output[0] == name:
@@ -60,7 +60,7 @@ class TensorInfo:
         Parses a TensorProto and returns the tensor
         """
         shape = [dim for dim in initializer.dims]
-        data: NDArray[np.float64] = onnx.numpy_helper.to_array(initializer)
+        data: NDArray[np.float32] = onnx.numpy_helper.to_array(initializer)
         assert list(data.shape) == shape, "Tensor shape and data shape should match"
         return TensorInfo(
             name=initializer.name,

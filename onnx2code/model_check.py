@@ -6,7 +6,7 @@ def model_check(output: Output, n_inputs: int = 2) -> bool:
     """
     Checks if the generated output matches the reference (ONNX Runtime)
 
-    <n_inputs> random inputs will be generated
+    :param n_inputs: random inputs will be generated
     """
 
     with ModelService(output) as service:

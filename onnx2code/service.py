@@ -1,7 +1,9 @@
-from pathlib import Path
-from typing import Any
-from subprocess import call
 import tempfile
+from pathlib import Path
+from subprocess import call
+from typing import Any
+
+import numpy as np
 import numpy.typing as npt
 
 from .output import Output
@@ -23,12 +25,12 @@ class ModelService:
         """
         self.temp_dir = tempfile.TemporaryDirectory()
 
-        self.__compile()
-        self.__boot()
+        self._compile()
+        self._boot()
 
         return self
 
-    def __compile(self) -> None:
+    def _compile(self) -> None:
         temp_dir = Path(self.temp_dir.name)
 
         cpp_file = temp_dir / "model.cpp"
@@ -38,13 +40,13 @@ class ModelService:
         asm_object = temp_dir / "model-asm.o"
         self.service_path = temp_dir / "service"
 
-        # TODO: sponja
-        with open(cpp_file, "w") as f:
-            f.write(self.output.source_cpp)
-        with open(hpp_file, "w") as f:
-            f.write(self.output.source_hpp)
-        with open(asm_file, "w") as f:
-            f.write(self.output.source_asm)
+        for file, content in [
+            (cpp_file, self.output.source_cpp),
+            (hpp_file, self.output.source_hpp),
+            (asm_file, self.output.source_asm),
+        ]:
+            with open(file, "w") as f:
+                f.write(content)
 
         compile_asm_cmd = [
             "nasm",
@@ -79,10 +81,12 @@ class ModelService:
 
         pass
 
-    def __boot(self) -> None:
+    def _boot(self) -> None:
         pass
 
-    def inference(self, inputs: list[npt.NDArray]) -> list[npt.NDArray]:
+    def inference(
+        self, inputs: list[npt.NDArray[np.float32]]
+    ) -> list[npt.NDArray[np.float32]]:
         # TODO: pasar por pipes los inputs y outputs
         return []
 
