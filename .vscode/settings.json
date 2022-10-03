@@ -5,6 +5,9 @@
         "**/.ipynb_checkpoints/": true,
     },
     "editor.tabSize": 4,
+    "editor.rulers": [
+        { "column": 88, "color": "#3ca33c" }
+    ],
     "python.formatting.provider": "black",
     "python.linting.flake8Enabled": true,
     "python.linting.mypyEnabled": true,
