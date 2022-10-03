@@ -15,7 +15,10 @@ def _get_model_inputs(model: onnx.ModelProto) -> list[onnx.ValueInfoProto]:
 
 # taken from onnx_simplifier.get_shape_from_value_info_proto
 def _get_shape_from_value_info_proto(v: onnx.ValueInfoProto) -> list[int]:
-    return [dim.dim_value for dim in v.type.tensor_type.shape.dim]
+    # TODO: aca las dimensiones unknown las estamos poniendo en 1,
+    #       eso no esta bien. Hay que usar onnxsimplifier con el shape del input
+    #       en 1 y que infiera los sizes correctos para el resto de los tensors
+    return [dim.dim_value or 1 for dim in v.type.tensor_type.shape.dim]
 
 
 @dataclass

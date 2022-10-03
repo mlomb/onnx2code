@@ -39,14 +39,30 @@ class ModelService:
         cpp_file = temp_dir / "model.cpp"
         hpp_file = temp_dir / "model.hpp"
         asm_file = temp_dir / "model.asm"
+        svc_file = temp_dir / "service.cpp"
+        weights_file = temp_dir / "weights.bin"
 
         asm_object = temp_dir / "model-asm.o"
-        self.service_path = temp_dir / "service"
+        self.service_executable = temp_dir / "service"
+        self.output.weights.tofile(weights_file)
+
+        source_service = f"""
+int main(int argc, char **argv) {{
+    float *weights;
+
+    while(1) {{
+
+    }}
+
+    return 0;
+}}
+"""
 
         for file, content in [
             (cpp_file, self.output.source_cpp),
             (hpp_file, self.output.source_hpp),
             (asm_file, self.output.source_asm),
+            (svc_file, source_service),
         ]:
             with open(file, "w") as f:
                 f.write(content)
@@ -66,9 +82,10 @@ class ModelService:
             str(asm_object),
             str(hpp_file),
             str(cpp_file),
+            str(svc_file),
             # TODO: service cpp (will not compile right now)
             "-o",
-            str(self.service_path),
+            str(self.service_executable),
             "-O0",
             "-g",
             "-fsanitize=address",

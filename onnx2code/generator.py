@@ -23,6 +23,9 @@ class Generator:
         self.asm_code_blocks: list[str] = []
         self.calls: list[str] = []
 
+    def get_tensors_with_tag(self, tag: str) -> list[TensorInfo]:
+        return [tensor for tensor in self.tensors.values() if tensor.tag == tag]
+
     def weld_tensors(self, name_from: str, name_to: str) -> None:
         """
         Weld tensors together
@@ -46,28 +49,33 @@ class Generator:
 
             op.emit(self)
 
-        source_cpp = ""
+        source_cpp = "\n".join(["#include <cstring>", ""])
         source_hpp = ""
         source_asm = ""
 
-        source_cpp = "\n".join(self.c_code_blocks)
-        source_asm = "\n".join(self.asm_code_blocks)
+        source_cpp += "\n".join(self.c_code_blocks)
+        source_asm += "\n".join(self.asm_code_blocks)
+
+        inputs = self.get_tensors_with_tag("input")
+        outputs = self.get_tensors_with_tag("output")
+
+        inference_params = [
+            *["const float* " + tensor.variable for tensor in inputs],
+            *["float* " + tensor.variable for tensor in outputs],
+            "const float* weights"
+        ]
+
+        source_cpp += f"""\n\nvoid inference({",".join(inference_params)}) {{"""
+        source_cpp += "\n".join([call for call in self.calls])
+        source_cpp += "}"
 
         return Output(
-            input_shapes={
-                tensor.name: tensor.shape
-                for tensor in self.tensors.values()
-                if tensor.tag == "input"
-            },
-            ouput_shapes={
-                tensor.name: tensor.shape
-                for tensor in self.tensors.values()
-                if tensor.tag == "output"
-            },
+            input_shapes={tensor.name: tensor.shape for tensor in inputs},
+            ouput_shapes={tensor.name: tensor.shape for tensor in outputs},
             source_cpp=source_cpp,
             source_hpp=source_hpp,
             source_asm=source_asm,
-            weights=np.array([]),
+            weights=np.array([1, 2, 3], dtype=np.float32),
         )
 
     def add_function(
@@ -116,4 +124,4 @@ class Generator:
         """
         Add a function call
         """
-        self.calls.append(f"{function}();")
+        self.calls.append(f"{function}(T0, T1);")
