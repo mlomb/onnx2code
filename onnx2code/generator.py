@@ -1,3 +1,4 @@
+from typing import Literal
 import onnx
 import numpy as np
 
@@ -17,6 +18,7 @@ class Generator:
         self.tensors = {tensor.name: tensor for tensor in parse_tensors(model_proto)}
 
         # TODO: hacer mas lindo :)
+        self.functions: list[str] = []
         self.c_code_blocks: list[str] = []
         self.asm_code_blocks: list[str] = []
         self.calls: list[str] = []
@@ -40,7 +42,7 @@ class Generator:
         from .ops.operation import Operation
 
         for node in self.model_proto.graph.node:
-            op = Operation.get(node.op_type, ["cpp"])(self, node)
+            op = Operation.get(node.op_type, ["cpp", "asm"])(self, node)
 
             op.emit(self)
 
@@ -67,6 +69,34 @@ class Generator:
             source_asm=source_asm,
             weights=np.array([]),
         )
+
+    def add_function(
+        self,
+        name: str,
+        inputs: list[str],
+        outputs: list[str],
+        lang: Literal["cpp", "asm"],
+        code: str,
+    ) -> None:
+        """
+        Add a function definition
+        """
+        if name in self.functions:
+            return
+
+        input_list = ", ".join(f"const float* {name}" for name in inputs)
+        output_list = ", ".join(f"float* {name}" for name in outputs)
+        decl = f"void {name}({input_list}, {output_list})"
+
+        if lang == "cpp":
+            self.add_c_block(f"{decl} {{\n{code}\n}}")
+        elif lang == "asm":
+            self.add_c_block(f"{decl};")
+            self.add_asm_block(
+                "\n".join([f";; {decl}", f"global {name}", f"{name}:", code])
+            )
+
+        self.functions.append(name)
 
     def add_c_block(self, code: str) -> None:
         """

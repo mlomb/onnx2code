@@ -22,21 +22,26 @@ class Identity(Operation):
 @Identity.variant("cpp")
 class IdentityCPP(Identity):
     def emit(self, gen: Generator) -> None:
-        gen.add_c_block(
-            """
-        template<typename T, unsigned int SIZE>
-        void Identity(const T* A, T* B) {{
-            memcpy(B, A, SIZE * sizeof(T));
-        }}
-        """
+        gen.add_function(
+            "identity",
+            ["A"],
+            ["B"],
+            "cpp",
+            f"memcpy(B, A, {self.inputs[0].size} * sizeof(float));",
         )
 
-        gen.add_call(
-            f"""Identity<float, {self.inputs}>""", self.inputs[0], self.outputs[0]
-        )
+        gen.add_call("identity", self.inputs[0], self.outputs[0])
 
 
 @Identity.variant("asm")
 class IdentityASM(Identity):
     def emit(self, gen: Generator) -> None:
-        print("ASM variant called")
+        gen.add_function(
+            "identity",
+            ["A"],
+            ["B"],
+            "asm",
+            "mov rax, A\nmov rbx, B\nmov rcx, SIZE\nrep movsb",
+        )
+
+        gen.add_call("identity", self.inputs[0], self.outputs[0])

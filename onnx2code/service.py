@@ -31,7 +31,10 @@ class ModelService:
         return self
 
     def _compile(self) -> None:
-        temp_dir = Path(self.temp_dir.name)
+        # temp_dir = Path(self.temp_dir.name)
+
+        temp_dir = Path("tmp/")
+        temp_dir.mkdir(exist_ok=True)
 
         cpp_file = temp_dir / "model.cpp"
         hpp_file = temp_dir / "model.hpp"

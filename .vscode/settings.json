@@ -18,4 +18,5 @@
         "--no-pretty",
         "--strict"
     ],
+    "python.linting.enabled": true,
 }
