@@ -6,7 +6,7 @@
     },
     "editor.tabSize": 4,
     "editor.rulers": [
-        { "column": 88, "color": "#3ca33c" }
+        { "column": 88, "color": "#575a57" }
     ],
     "python.formatting.provider": "black",
     "python.linting.flake8Enabled": true,
