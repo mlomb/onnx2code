@@ -1,8 +1,10 @@
 import tempfile
 from pathlib import Path
 from subprocess import call
+from time import sleep
 from typing import Any
 from multiprocessing import shared_memory
+import subprocess
 
 import numpy as np
 import numpy.typing as npt
@@ -90,25 +92,46 @@ class ModelService:
         pass
 
     def _boot(self) -> None:
+        """
+        Creates the shared memory blocks and starts the service subprocess
+        """
         self.shm_inputs = shared_memory.SharedMemory(
             "/onnx2code-inputs", create=True, size=5
         )
         self.shm_outputs = shared_memory.SharedMemory(
             "/onnx2code-outputs", create=True, size=5
         )
-
-        pass
+        self.process = subprocess.Popen(
+            [self.service_executable], stdin=subprocess.PIPE, stdout=subprocess.PIPE
+        )
 
     def inference(
         self, inputs: list[npt.NDArray[np.float32]]
     ) -> list[npt.NDArray[np.float32]]:
-        # TODO: pasar por pipes los inputs y outputs
+        """
+        Runs the model with the given inputs
+        """
+        # load inputs into shared memory
+        # TODO: copy from inputs to shm_inputs
+
+        # signal service that inputs are ready
+        assert self.process.stdin and self.process.stdout
+        self.process.stdin.write("1".encode())
+        self.process.stdin.flush()
+        # wait for service to finish inference
+        self.process.stdout.read(1)
+
+        # read outputs from shared memory
+        # TODO: copy shm_outputs to return value
         return []
 
     def __exit__(self, _1: Any, _2: Any, _3: Any) -> None:
-        # remove compilation files
-        self.temp_dir.cleanup()
+        # exit service
+        self.process.terminate()
 
-        # release
+        # release shared memory
         self.shm_inputs.unlink()
         self.shm_outputs.unlink()
+
+        # remove compilation files
+        self.temp_dir.cleanup()
