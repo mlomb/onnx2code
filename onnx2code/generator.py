@@ -49,7 +49,7 @@ class Generator:
 
             op.emit(self)
 
-        source_cpp = "\n".join(["#include <cstring>", ""])
+        source_cpp = "\n".join(["#include <string.h>", ""])
         source_hpp = ""
         source_asm = ""
 
@@ -60,9 +60,9 @@ class Generator:
         outputs = self.get_tensors_with_tag("output")
 
         inference_params = [
+            "const float* weights",
             *["const float* " + tensor.variable for tensor in inputs],
             *["float* " + tensor.variable for tensor in outputs],
-            "const float* weights"
         ]
 
         source_cpp += f"""\n\nvoid inference({",".join(inference_params)}) {{"""

@@ -1,3 +1,4 @@
+import numpy as np
 import tf2onnx
 import tensorflow as tf
 
@@ -17,8 +18,8 @@ print(output)
 
 # model service?
 with ModelService(output) as service:
-    print(service)
-    service.inference(inputs=[])
+    outputs = service.inference(inputs=[np.array([1, 2, 3, 4, 5], dtype=np.float32)])
+    print(outputs)
 
 # quick test
 correct = model_check(output, n_inputs=1)

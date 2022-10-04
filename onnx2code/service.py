@@ -39,11 +39,11 @@ class ModelService:
         temp_dir = Path("tmp/")
         temp_dir.mkdir(exist_ok=True)
 
-        cpp_file = temp_dir / "model.cpp"
-        hpp_file = temp_dir / "model.hpp"
+        cpp_file = temp_dir / "model.c"
+        hpp_file = temp_dir / "model.h"
         asm_file = temp_dir / "model.asm"
         weights_file = temp_dir / "weights.bin"
-        svc_file = Path(__file__).parent / "service.cpp"
+        svc_file = Path(__file__).parent / "service.c"
 
         asm_object = temp_dir / "model-asm.o"
         self.service_executable = temp_dir / "service"
@@ -79,6 +79,8 @@ class ModelService:
             "-O0",
             "-g",
             "-fsanitize=address",
+            "-std=c99",
+            "-Wall",
         ]
 
         # TODO: hacer una funcion que corra el comando y parse el output
@@ -96,10 +98,16 @@ class ModelService:
         Creates the shared memory blocks and starts the service subprocess
         """
         self.shm_inputs = shared_memory.SharedMemory(
-            "/onnx2code-inputs", create=True, size=5
+            "/onnx2code-inputs", create=True, size=5 * 4
+        )
+        self.inputs_buffer = np.ndarray(
+            (5), dtype=np.float32, buffer=self.shm_inputs.buf
         )
         self.shm_outputs = shared_memory.SharedMemory(
-            "/onnx2code-outputs", create=True, size=5
+            "/onnx2code-outputs", create=True, size=5 * 4
+        )
+        self.outputs_buffer = np.ndarray(
+            (5), dtype=np.float32, buffer=self.shm_outputs.buf
         )
         self.process = subprocess.Popen(
             [self.service_executable], stdin=subprocess.PIPE, stdout=subprocess.PIPE
@@ -110,9 +118,13 @@ class ModelService:
     ) -> list[npt.NDArray[np.float32]]:
         """
         Runs the model with the given inputs
+
+        TODO: support more than one input and output
         """
+        assert len(inputs) == len(self.output.input_shapes)
+
         # load inputs into shared memory
-        # TODO: copy from inputs to shm_inputs
+        self.inputs_buffer[:] = inputs[0]
 
         # signal service that inputs are ready
         assert self.process.stdin and self.process.stdout
@@ -122,8 +134,7 @@ class ModelService:
         self.process.stdout.read(1)
 
         # read outputs from shared memory
-        # TODO: copy shm_outputs to return value
-        return []
+        return [self.outputs_buffer]
 
     def __exit__(self, _1: Any, _2: Any, _3: Any) -> None:
         # exit service
