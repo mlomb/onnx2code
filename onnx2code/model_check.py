@@ -14,7 +14,7 @@ def model_check(output: Output, n_inputs: int = 2) -> bool:
     with ModelService(output) as service:
         for _ in range(n_inputs):
             # TODO: generar inputs
-            service.inference(inputs=[np.array([1, 2, 3, 4, 5], dtype=np.float32)])
+            service.inference(inputs=[np.array([1, 2, 3], dtype=np.float32)])
             # invocar a onnxruntime y comparar!
 
     return False

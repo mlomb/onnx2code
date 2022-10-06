@@ -7,8 +7,8 @@ from onnx2code.model_check import model_check
 from onnx2code.service import ModelService
 
 # Test model
-inputs = tf.keras.Input([5])
-outputs = tf.keras.layers.Lambda(lambda x: x + np.array([1, 2, 3, 4, 5]))(inputs)
+inputs = tf.keras.Input([3])
+outputs = tf.keras.layers.Lambda(lambda x: x + np.array([1, 2, 3]))(inputs)
 model = tf.keras.Model(inputs=[inputs], outputs=[outputs])
 model_proto, _ = tf2onnx.convert.from_keras(model)
 
@@ -18,8 +18,11 @@ print(output)
 
 # model service?
 with ModelService(output) as service:
-    outputs = service.inference(inputs=[np.array([1, 2, 3, 4, 5], dtype=np.float32)])
-    print(outputs)
+    for i in range(10):
+        outputs = service.inference(
+            inputs=[np.array([0, 1, 2], dtype=np.float32) + i]
+        )
+        print(outputs)
 
 # quick test
 correct = model_check(output, n_inputs=1)

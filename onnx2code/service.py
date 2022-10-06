@@ -1,11 +1,9 @@
 import tempfile
 from pathlib import Path
 from subprocess import call
-from time import sleep
 from typing import Any
 from multiprocessing import shared_memory
 import subprocess
-
 import numpy as np
 import numpy.typing as npt
 
@@ -73,7 +71,6 @@ class ModelService:
             str(hpp_file),
             str(cpp_file),
             str(svc_file),
-            # TODO: service cpp (will not compile right now)
             "-o",
             str(self.service_executable),
             "-O0",
@@ -98,16 +95,16 @@ class ModelService:
         Creates the shared memory blocks and starts the service subprocess
         """
         self.shm_inputs = shared_memory.SharedMemory(
-            "/onnx2code-inputs", create=True, size=5 * 4
-        )
-        self.inputs_buffer = np.ndarray(
-            (5), dtype=np.float32, buffer=self.shm_inputs.buf
+            "/onnx2code-inputs", create=True, size=self.output.inputs_size * 4
         )
         self.shm_outputs = shared_memory.SharedMemory(
-            "/onnx2code-outputs", create=True, size=5 * 4
+            "/onnx2code-outputs", create=True, size=self.output.outputs_size * 4
+        )
+        self.inputs_buffer = np.ndarray(
+            self.output.inputs_size, dtype=np.float32, buffer=self.shm_inputs.buf
         )
         self.outputs_buffer = np.ndarray(
-            (5), dtype=np.float32, buffer=self.shm_outputs.buf
+            self.output.outputs_size, dtype=np.float32, buffer=self.shm_outputs.buf
         )
         self.process = subprocess.Popen(
             [self.service_executable, self.weights_file],

@@ -59,19 +59,21 @@ class Generator:
         inputs = self.get_tensors_with_tag("input")
         outputs = self.get_tensors_with_tag("output")
 
-        inference_params = [
-            "float* weights",  # TODO: const
-            *["const float* " + tensor.variable for tensor in inputs],
-            *["float* " + tensor.variable for tensor in outputs],
-        ]
+        source_cpp += f"""\n\nvoid inference(const float* weights, const float* inputs, float* outputs) {{"""
 
-        source_cpp += f"""\n\nvoid inference({",".join(inference_params)}) {{"""
+        for tensor in self.tensors.values():
+            if tensor.tag == "input":
+                source_cpp += (
+                    f"""\n\tconst float* {tensor.variable} = {tensor.tag}s + {0};"""
+                )
+            elif tensor.tag == "output":
+                source_cpp += f"""\n\tfloat* {tensor.variable} = {tensor.tag}s + {0};"""
 
         tensors_data = []
         tensors_data_offset = 0
         for tensor in self.tensors.values():
             if tensor.data is not None:
-                source_cpp += f"\nfloat* {tensor.variable} = weights + {tensors_data_offset}; // {tensor.name} {tensor.shape}\n"
+                source_cpp += f"\nconst float* {tensor.variable} = weights + {tensors_data_offset}; // {tensor.name} {tensor.shape}\n"
                 tensors_data.append(tensor.data)
                 tensors_data_offset += tensor.data.size
 
@@ -81,6 +83,8 @@ class Generator:
         return Output(
             input_shapes={tensor.name: tensor.shape for tensor in inputs},
             ouput_shapes={tensor.name: tensor.shape for tensor in outputs},
+            inputs_size=sum([tensor.size for tensor in inputs]),
+            outputs_size=sum([tensor.size for tensor in outputs]),
             source_cpp=source_cpp,
             source_hpp=source_hpp,
             source_asm=source_asm,

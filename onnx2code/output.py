@@ -9,6 +9,8 @@ ShapesMap = dict[str, list[int]]
 class Output:
     input_shapes: ShapesMap
     ouput_shapes: ShapesMap
+    inputs_size: int
+    outputs_size: int
     source_cpp: str
     source_hpp: str
     source_asm: str
