@@ -42,12 +42,12 @@ class ModelService:
         cpp_file = temp_dir / "model.c"
         hpp_file = temp_dir / "model.h"
         asm_file = temp_dir / "model.asm"
-        weights_file = temp_dir / "weights.bin"
+        self.weights_file = temp_dir / "weights.bin"
         svc_file = Path(__file__).parent / "service.c"
 
         asm_object = temp_dir / "model-asm.o"
         self.service_executable = temp_dir / "service"
-        self.output.weights.tofile(weights_file)
+        self.output.weights.tofile(self.weights_file)
 
         for file, content in [
             (cpp_file, self.output.source_cpp),
@@ -110,7 +110,9 @@ class ModelService:
             (5), dtype=np.float32, buffer=self.shm_outputs.buf
         )
         self.process = subprocess.Popen(
-            [self.service_executable], stdin=subprocess.PIPE, stdout=subprocess.PIPE
+            [self.service_executable, self.weights_file],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
         )
 
     def inference(

@@ -60,12 +60,21 @@ class Generator:
         outputs = self.get_tensors_with_tag("output")
 
         inference_params = [
-            "const float* weights",
+            "float* weights",  # TODO: const
             *["const float* " + tensor.variable for tensor in inputs],
             *["float* " + tensor.variable for tensor in outputs],
         ]
 
         source_cpp += f"""\n\nvoid inference({",".join(inference_params)}) {{"""
+
+        tensors_data = []
+        tensors_data_offset = 0
+        for tensor in self.tensors.values():
+            if tensor.data is not None:
+                source_cpp += f"\nfloat* {tensor.variable} = weights + {tensors_data_offset}; // {tensor.name} {tensor.shape}\n"
+                tensors_data.append(tensor.data)
+                tensors_data_offset += tensor.data.size
+
         source_cpp += "\n".join([call for call in self.calls])
         source_cpp += "}"
 
@@ -75,7 +84,7 @@ class Generator:
             source_cpp=source_cpp,
             source_hpp=source_hpp,
             source_asm=source_asm,
-            weights=np.array([1, 2, 3], dtype=np.float32),
+            weights=np.array(tensors_data),
         )
 
     def add_function(
@@ -124,4 +133,4 @@ class Generator:
         """
         Add a function call
         """
-        self.calls.append(f"{function}(T0, T1);")
+        self.calls.append(f"""{function}({", ".join(t.variable for t in args)});""")

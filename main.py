@@ -6,9 +6,9 @@ from onnx2code.generator import Generator
 from onnx2code.model_check import model_check
 from onnx2code.service import ModelService
 
-# Identity test model
+# Test model
 inputs = tf.keras.Input([5])
-outputs = tf.keras.layers.Lambda(lambda x: x)(inputs)
+outputs = tf.keras.layers.Lambda(lambda x: x + np.array([1, 2, 3, 4, 5]))(inputs)
 model = tf.keras.Model(inputs=[inputs], outputs=[outputs])
 model_proto, _ = tf2onnx.convert.from_keras(model)
 

@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <assert.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -23,7 +24,24 @@ void* map_shared_memory(const char* name) {
     return shared;
 }
 
+void* read_file(const char* filename) {
+    FILE *fp = fopen(filename, "r");
+    assert(fp != NULL);
+
+    fseek(fp, 0, SEEK_END);
+    long size = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    
+    void* buffer = malloc(size);
+
+    fread(buffer, sizeof(char), size, fp);
+    fclose(fp);
+
+    return buffer;
+}
+
 int main(int argc, char **argv) {
+    const float* weights = (const float*) read_file(argv[1]);
     float *inputs = (float*) map_shared_memory("/onnx2code-inputs");
     float *outputs = (float*) map_shared_memory("/onnx2code-outputs");
 
@@ -33,7 +51,7 @@ int main(int argc, char **argv) {
         read(STDIN_FILENO, &signal, 1);
 
         // run inference
-        inference(NULL, inputs, outputs);
+        inference(weights, inputs, outputs);
 
         // mark as ready
         write(STDOUT_FILENO, &signal, 1);
