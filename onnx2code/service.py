@@ -88,8 +88,6 @@ class ModelService:
         if call(compile_svc_cmd) != 0:
             raise Exception("failure compiling service")
 
-        pass
-
     def _boot(self) -> None:
         """
         Creates the shared memory blocks and starts the service subprocess
@@ -100,10 +98,10 @@ class ModelService:
         self.shm_outputs = shared_memory.SharedMemory(
             "/onnx2code-outputs", create=True, size=self.result.outputs_size * 4
         )
-        self.inputs_buffer = np.ndarray(
+        self.inputs_buffer: npt.NDArray[np.float32] = np.ndarray(
             self.result.inputs_size, dtype=np.float32, buffer=self.shm_inputs.buf
         )
-        self.outputs_buffer = np.ndarray(
+        self.outputs_buffer: npt.NDArray[np.float32] = np.ndarray(
             self.result.outputs_size, dtype=np.float32, buffer=self.shm_outputs.buf
         )
         self.process = subprocess.Popen(
@@ -113,7 +111,7 @@ class ModelService:
         )
 
     def inference(
-        self, inputs: list[npt.NDArray[np.float32]]
+        self, inputs: dict[str, npt.NDArray[np.float32]]
     ) -> list[npt.NDArray[np.float32]]:
         """
         Runs the model with the given inputs
@@ -123,7 +121,7 @@ class ModelService:
         assert len(inputs) == len(self.result.input_shapes)
 
         # load inputs into shared memory
-        self.inputs_buffer[:] = inputs[0].reshape(-1)
+        self.inputs_buffer[:] = list(inputs.values())[0].reshape(-1)
 
         # signal service that inputs are ready
         assert self.process.stdin and self.process.stdout
