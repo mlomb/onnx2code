@@ -13,8 +13,8 @@ model = tf.keras.Model(inputs=[inputs], outputs=[outputs])
 model_proto, _ = tf2onnx.convert.from_keras(model)
 
 # generate
-#result = Generator(model_proto).generate()
-#print(result)
+# result = Generator(model_proto).generate()
+# print(result)
 
 # model service?
 # with ModelService(result) as service:
@@ -23,5 +23,5 @@ model_proto, _ = tf2onnx.convert.from_keras(model)
 #        print(outputs)
 
 # quick test
-correct = check_model(model_proto, n_inputs=1)
-print(f"Model check: {correct}")
+check_model(model_proto, n_inputs=1)
+print("OK")

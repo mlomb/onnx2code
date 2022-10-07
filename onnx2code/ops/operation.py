@@ -43,6 +43,8 @@ class Operation(ABC):
                 Operation._registry[node_type] = cls
 
     @staticmethod
+    # TODO: ver, hay un bug acá
+    # creo que baseclass esta mal seteado
     def get(node_type: str, variant: list[str]) -> type["Operation"]:
         if node_type not in Operation._registry:
             raise NotImplementedError(f"Operation {node_type} not implemented")
