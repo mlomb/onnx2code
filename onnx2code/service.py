@@ -40,11 +40,11 @@ class ModelService:
         cpp_file = temp_dir / "model.c"
         hpp_file = temp_dir / "model.h"
         asm_file = temp_dir / "model.asm"
-        self.weights_file = temp_dir / "weights.bin"
-        svc_file = Path(__file__).parent / "service.c"
-
         asm_object = temp_dir / "model-asm.o"
+        svc_file = Path(__file__).parent / "service.c"
+        self.weights_file = temp_dir / "weights.bin"
         self.service_executable = temp_dir / "service"
+
         self.result.weights.tofile(self.weights_file)
 
         for file, content in [
@@ -123,7 +123,7 @@ class ModelService:
         assert len(inputs) == len(self.result.input_shapes)
 
         # load inputs into shared memory
-        self.inputs_buffer[:] = inputs[0]
+        self.inputs_buffer[:] = inputs[0].reshape(-1)
 
         # signal service that inputs are ready
         assert self.process.stdin and self.process.stdout
