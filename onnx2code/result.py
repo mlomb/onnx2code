@@ -6,7 +6,7 @@ ShapesMap = dict[str, list[int]]
 
 
 @dataclass
-class Output:
+class ModelResult:
     input_shapes: ShapesMap
     ouput_shapes: ShapesMap
     inputs_size: int

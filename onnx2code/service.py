@@ -7,7 +7,7 @@ import subprocess
 import numpy as np
 import numpy.typing as npt
 
-from .output import Output
+from .result import ModelResult
 
 
 class ModelService:
@@ -17,8 +17,8 @@ class ModelService:
     Used for testing and evaluation
     """
 
-    def __init__(self, output: Output):
-        self.output = output
+    def __init__(self, result: ModelResult):
+        self.result = result
 
     def __enter__(self) -> "ModelService":
         """
@@ -45,12 +45,12 @@ class ModelService:
 
         asm_object = temp_dir / "model-asm.o"
         self.service_executable = temp_dir / "service"
-        self.output.weights.tofile(self.weights_file)
+        self.result.weights.tofile(self.weights_file)
 
         for file, content in [
-            (cpp_file, self.output.source_cpp),
-            (hpp_file, self.output.source_hpp),
-            (asm_file, self.output.source_asm),
+            (cpp_file, self.result.source_cpp),
+            (hpp_file, self.result.source_hpp),
+            (asm_file, self.result.source_asm),
         ]:
             with open(file, "w") as f:
                 f.write(content)
@@ -95,16 +95,16 @@ class ModelService:
         Creates the shared memory blocks and starts the service subprocess
         """
         self.shm_inputs = shared_memory.SharedMemory(
-            "/onnx2code-inputs", create=True, size=self.output.inputs_size * 4
+            "/onnx2code-inputs", create=True, size=self.result.inputs_size * 4
         )
         self.shm_outputs = shared_memory.SharedMemory(
-            "/onnx2code-outputs", create=True, size=self.output.outputs_size * 4
+            "/onnx2code-outputs", create=True, size=self.result.outputs_size * 4
         )
         self.inputs_buffer = np.ndarray(
-            self.output.inputs_size, dtype=np.float32, buffer=self.shm_inputs.buf
+            self.result.inputs_size, dtype=np.float32, buffer=self.shm_inputs.buf
         )
         self.outputs_buffer = np.ndarray(
-            self.output.outputs_size, dtype=np.float32, buffer=self.shm_outputs.buf
+            self.result.outputs_size, dtype=np.float32, buffer=self.shm_outputs.buf
         )
         self.process = subprocess.Popen(
             [self.service_executable, self.weights_file],
@@ -120,7 +120,7 @@ class ModelService:
 
         TODO: support more than one input and output
         """
-        assert len(inputs) == len(self.output.input_shapes)
+        assert len(inputs) == len(self.result.input_shapes)
 
         # load inputs into shared memory
         self.inputs_buffer[:] = inputs[0]

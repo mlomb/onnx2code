@@ -3,7 +3,7 @@ import onnx
 import numpy as np
 
 from .tensor import TensorInfo, parse_tensors
-from .output import Output
+from .result import ModelResult
 
 
 class Generator:
@@ -38,7 +38,7 @@ class Generator:
 
         self.tensors[name_from].variable = self.tensors[name_to].variable
 
-    def generate(self) -> Output:
+    def generate(self) -> ModelResult:
         """
         Generate code
         """
@@ -80,7 +80,7 @@ class Generator:
         source_cpp += "\n".join([call for call in self.calls])
         source_cpp += "}"
 
-        return Output(
+        return ModelResult(
             input_shapes={tensor.name: tensor.shape for tensor in inputs},
             ouput_shapes={tensor.name: tensor.shape for tensor in outputs},
             inputs_size=sum([tensor.size for tensor in inputs]),

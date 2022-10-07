@@ -3,8 +3,8 @@ import tf2onnx
 import tensorflow as tf
 
 from onnx2code.generator import Generator
-from onnx2code.model_check import model_check
 from onnx2code.service import ModelService
+from onnx2code.model_check import model_check
 
 # Test model
 inputs = tf.keras.Input([3])
@@ -13,17 +13,15 @@ model = tf.keras.Model(inputs=[inputs], outputs=[outputs])
 model_proto, _ = tf2onnx.convert.from_keras(model)
 
 # generate
-output = Generator(model_proto).generate()
-print(output)
+result = Generator(model_proto).generate()
+print(result)
 
 # model service?
-with ModelService(output) as service:
+with ModelService(result) as service:
     for i in range(10):
-        outputs = service.inference(
-            inputs=[np.array([0, 1, 2], dtype=np.float32) + i]
-        )
+        outputs = service.inference(inputs=[np.array([0, 1, 2], dtype=np.float32) + i])
         print(outputs)
 
 # quick test
-correct = model_check(output, n_inputs=1)
+correct = model_check(result, n_inputs=1)
 print(f"Model check: {correct}")
