@@ -3,13 +3,17 @@ import sys
 
 # Silence TF
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+# Do not use GPU
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 # Make onnxruntime only use 1 CPU thread
 os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
 
 sys.path.append("../")
 
-import time  # noqa: E402
+from time import perf_counter_ns  # noqa: E402
 import tensorflow as tf  # noqa: E402
 import onnx  # noqa: E402
 import onnxruntime  # noqa: E402
@@ -25,38 +29,58 @@ from onnx2code.service import ModelService  # noqa: E402
 tf.config.threading.set_inter_op_parallelism_threads(1)
 tf.config.threading.set_intra_op_parallelism_threads(1)
 
-# TODO: warmup
-# TODO: average runs
-
 
 Inputs = dict[str, npt.NDArray[np.float32]]
 
 
-def measure_tf(tf_model: tf.keras.Model, inputs: Inputs) -> float:
-    start = time.time()
-    tf_model.predict(inputs, verbose=0)
-    end = time.time()
-    return end - start
+def measure_tf(tf_model: tf.keras.Model, inputs: Inputs, runs: int) -> list[int]:
+    times = []
+
+    for _ in range(runs):
+        start = perf_counter_ns()
+        tf_model.predict(inputs, verbose=0)
+        end = perf_counter_ns()
+        times.append(end - start)
+
+    return times
 
 
-def measure_onnxruntime(model_proto: onnx.ModelProto, inputs: Inputs) -> float:
+def measure_onnxruntime(
+    model_proto: onnx.ModelProto, inputs: Inputs, runs: int
+) -> list[int]:
+    times = []
     ort_sess = onnxruntime.InferenceSession(model_proto.SerializeToString())
 
-    start = time.time()
-    ort_sess.run(None, inputs)
-    end = time.time()
-    return end - start
+    for _ in range(runs):
+        start = perf_counter_ns()
+        ort_sess.run(None, inputs)
+        end = perf_counter_ns()
+        times.append(end - start)
+
+    return times
 
 
-def measure_onnx2code(model_result: ModelResult, inputs: Inputs) -> float:
+def measure_onnx2code(
+    model_result: ModelResult, inputs: Inputs, runs: int
+) -> list[int]:
+    times = []
+
     with ModelService(model_result) as service:
-        start = time.time()
-        service.inference(inputs)
-        end = time.time()
-        return end - start
+        for _ in range(runs):
+            start = perf_counter_ns()
+            service.inference(inputs)
+            end = perf_counter_ns()
+            times.append(end - start)
+
+    return times
 
 
-def measure_all(tf_model: tf.keras.Model) -> None:
+def measure_all(tf_model: tf.keras.Model, runs: int = 300) -> dict[str, list[float]]:
+    """
+    Measure the inference time of the given model in tf, onnxruntime and onnx2code.
+
+    Time in milliseconds.
+    """
     model_proto, _ = tf2onnx.convert.from_keras(tf_model)
     model_result = Generator(model_proto).generate()
 
@@ -65,6 +89,14 @@ def measure_all(tf_model: tf.keras.Model) -> None:
         for name, shape in model_result.input_shapes.items()
     }
 
-    print("tensorflow:", measure_tf(tf_model, inputs))
-    print("onnxruntime:", measure_onnxruntime(model_proto, inputs))
-    print("onnx2code:", measure_onnx2code(model_result, inputs))
+    warmup_runs = 100
+    total = runs + warmup_runs
+
+    def postprocess(times_in_ns: list[int]) -> list[float]:
+        return [t / 1_000_000 for t in times_in_ns[warmup_runs:]]
+
+    return {
+        "tensorflow": postprocess(measure_tf(tf_model, inputs, total)),
+        "onnxruntime": postprocess(measure_onnxruntime(model_proto, inputs, total)),
+        "onnx2code": postprocess(measure_onnx2code(model_result, inputs, total)),
+    }

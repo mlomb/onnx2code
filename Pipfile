@@ -11,6 +11,7 @@ onnxruntime = "*"
 pytest = "*"
 tensorflow = "*"
 tf2onnx = ">=1.12.1"
+matplotlib = "*"
 
 [dev-packages]
 mypy = "*"
