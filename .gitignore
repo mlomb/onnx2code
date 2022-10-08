@@ -6,4 +6,4 @@ __pycache__/
 
 # Data files
 /data
-/tmp
+**/tmp

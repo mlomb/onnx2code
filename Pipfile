@@ -15,6 +15,11 @@ tf2onnx = ">=1.12.1"
 [dev-packages]
 mypy = "*"
 flake8 = "*"
+black = "*"
+ipykernel = "*"
 
 [requires]
 python_version = "3.10"
+
+[pipenv]
+allow_prereleases = true
