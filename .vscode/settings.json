@@ -2,6 +2,8 @@
     "files.exclude": {
         ".git/": true,
         "**/__pycache__/": true,
+        "**/.mypy_cache/": true,
+        "**/.pytest_cache/": true,
         "**/.ipynb_checkpoints/": true,
     },
     "editor.tabSize": 4,

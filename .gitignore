@@ -1,6 +1,7 @@
 # Cache files
 .mypy_cache/
 .ipynb_checkpoints/
+.pytest_cache/
 __pycache__/
 
 # Data files
