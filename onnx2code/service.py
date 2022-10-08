@@ -131,7 +131,7 @@ class ModelService:
         self.process.stdout.read(1)
 
         # read outputs from shared memory
-        return [self.outputs_buffer]
+        return [self.outputs_buffer.reshape(list(self.result.ouput_shapes.values())[0])]
 
     def __exit__(self, _1: Any, _2: Any, _3: Any) -> None:
         # exit service
