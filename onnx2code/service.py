@@ -73,6 +73,7 @@ class ModelService:
             str(svc_file),
             "-o",
             str(self.service_executable),
+            "-lrt",  # for shm
             "-O0",
             "-g",
             "-fsanitize=address",
