@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Callable
+from collections import defaultdict
 
 import onnx
 
@@ -8,7 +9,7 @@ from ..generator import Generator
 
 class Operation(ABC):
     node_types: set[str]
-    _registry: dict[str, dict[str, type["Operation"]]] = {}
+    _registry: defaultdict[str, dict[str, type["Operation"]]] = defaultdict(dict)
 
     def __init__(self, gen: Generator, node: onnx.NodeProto):
         self.node = node
@@ -27,9 +28,8 @@ class Operation(ABC):
     @classmethod
     def variant(cls, name: str) -> Callable[[type["Operation"]], type["Operation"]]:
         def decorator(newcls: type[Operation]) -> type[Operation]:
-            if cls.__name__ not in cls._registry:
-                cls._registry[cls.__name__] = {}
-            cls._registry[cls.__name__][name] = newcls
+            for node_type in newcls.node_types:
+                cls._registry[node_type][name] = newcls
 
             return newcls
 
