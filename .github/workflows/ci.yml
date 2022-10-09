@@ -22,10 +22,10 @@ jobs:
         run: pipenv install --dev
 
       - name: Lint with flake8
-        run: flake8 . --count --statistics
+        run: pipenv run flake8 . --count --statistics
 
       - name: Check formatting with black
-        run: black --check --verbose .
+        run: pipenv run black --check --verbose .
 
   test:
     runs-on: ubuntu-latest
