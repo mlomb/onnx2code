@@ -23,7 +23,7 @@ def check_model(
         for _ in range(n_inputs):
 
             inputs = {
-                name: np.random.random_sample(shape).astype(np.float32) * 2 - 1
+                name: np.random.uniform(-1.0, 1.0, shape).astype(np.float32)
                 for name, shape in result.input_shapes.items()
             }
 
