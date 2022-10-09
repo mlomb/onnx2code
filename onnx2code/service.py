@@ -37,8 +37,8 @@ class ModelService:
         temp_dir = Path("tmp/")
         temp_dir.mkdir(exist_ok=True)
 
-        cpp_file = temp_dir / "model.c"
-        hpp_file = temp_dir / "model.h"
+        c_file = temp_dir / "model.c"
+        h_file = temp_dir / "model.h"
         asm_file = temp_dir / "model.asm"
         asm_object = temp_dir / "model-asm.o"
         svc_file = Path(__file__).parent / "service.c"
@@ -48,8 +48,8 @@ class ModelService:
         self.result.weights.tofile(self.weights_file)
 
         for file, content in [
-            (cpp_file, self.result.source_cpp),
-            (hpp_file, self.result.source_hpp),
+            (c_file, self.result.source_c),
+            (h_file, self.result.source_h),
             (asm_file, self.result.source_asm),
         ]:
             with open(file, "w") as f:
@@ -68,8 +68,8 @@ class ModelService:
             "gcc",
             "-m64",  # 64 bit env
             str(asm_object),
-            str(hpp_file),
-            str(cpp_file),
+            str(h_file),
+            str(c_file),
             str(svc_file),
             "-o",
             str(self.service_executable),

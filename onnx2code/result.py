@@ -11,7 +11,7 @@ class ModelResult:
     ouput_shapes: ShapesMap
     inputs_size: int
     outputs_size: int
-    source_cpp: str
-    source_hpp: str
+    source_c: str
+    source_h: str
     source_asm: str
     weights: npt.NDArray[np.float32]

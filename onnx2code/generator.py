@@ -1,4 +1,5 @@
 from typing import Literal
+from textwrap import dedent, indent
 import onnx
 import numpy as np
 
@@ -46,49 +47,49 @@ class Generator:
         from .ops.operation import Operation
 
         for node in self.model_proto.graph.node:
-            op = Operation.get(node.op_type, ["cpp", "asm"])(
+            op = Operation.get(node.op_type, ["c", "asm"])(
                 node,
                 [self.tensors[name] for name in node.input],
                 [self.tensors[name] for name in node.output],
             )
             op.emit(self)
 
-        source_cpp = ""
-        source_hpp = ""
+        source_c = ""
         source_asm = ""
 
-        source_cpp += "\n".join(self.c_code_blocks)
+        source_c += "\n".join(self.c_code_blocks)
         source_asm += "\n".join(self.asm_code_blocks)
 
         inputs = self.get_tensors_with_tag("input")
         outputs = self.get_tensors_with_tag("output")
 
-        source_cpp += f"""\n\nvoid inference(const float* weights, const float* inputs, float* outputs) {{"""
+        source_c += f"""\n\nvoid inference(const float* weights, const float* inputs, float* outputs) {{"""
 
         for tensor in self.tensors.values():
             if tensor.tag == "input":
-                source_cpp += f"""\n\tconst float* {tensor.variable} = inputs + {0};"""
+                source_c += f"""\n\tconst float* {tensor.variable} = inputs + {0};"""
             elif tensor.tag == "output":
-                source_cpp += f"""\n\tfloat* {tensor.variable} = outputs + {0};"""
+                source_c += f"""\n\tfloat* {tensor.variable} = outputs + {0};"""
 
         tensors_data = []
         tensors_data_offset = 0
         for tensor in self.tensors.values():
             if tensor.data is not None:
-                source_cpp += f"\nconst float* {tensor.variable} = weights + {tensors_data_offset}; // {tensor.name} {tensor.shape}\n"
+                source_c += f"\nconst float* {tensor.variable} = weights + {tensors_data_offset}; // {tensor.name} {tensor.shape}\n"
                 tensors_data.append(tensor.data)
                 tensors_data_offset += tensor.data.size
 
-        source_cpp += "\n".join([call for call in self.calls])
-        source_cpp += "}"
+        source_c += "\n\n    "
+        source_c += "\n    ".join([call for call in self.calls])
+        source_c += "\n}"
 
         return ModelResult(
             input_shapes={tensor.name: tensor.shape for tensor in inputs},
             ouput_shapes={tensor.name: tensor.shape for tensor in outputs},
             inputs_size=sum([tensor.size for tensor in inputs]),
             outputs_size=sum([tensor.size for tensor in outputs]),
-            source_cpp=source_cpp,
-            source_hpp=source_hpp,
+            source_c=source_c,
+            source_h="extern void inference(const float* weights, const float* inputs, float* outputs);",  # noqa: E501
             source_asm=source_asm,
             weights=np.array(tensors_data),
         )
@@ -98,7 +99,7 @@ class Generator:
         name: str,
         inputs: list[str],
         outputs: list[str],
-        lang: Literal["cpp", "asm"],
+        lang: Literal["c", "asm"],
         code: str,
     ) -> None:
         """
@@ -107,16 +108,31 @@ class Generator:
         if name in self.functions:
             return
 
+        code = indent(dedent(code), prefix=" " * 4)
         input_list = ", ".join(f"const float* {name}" for name in inputs)
         output_list = ", ".join(f"float* {name}" for name in outputs)
         decl = f"void {name}({input_list}, {output_list})"
 
-        if lang == "cpp":
-            self._add_c_block(f"{decl} {{\n{code}\n}}")
+        if lang == "c":
+            self._add_c_block(f"{decl} {{{code}}}")
         elif lang == "asm":
-            self._add_c_block(f"{decl};")
+            self._add_c_block(f"extern {decl};")
+
+            register_order = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]
+
+            comments = [decl]
+            for i, var_name in enumerate(inputs + outputs):
+                comments.append(f"{var_name}: {register_order[i]}")
+
             self._add_asm_block(
-                "\n".join([f";; {decl}", f"global {name}", f"{name}:", code])
+                "\n".join(
+                    [
+                        *[f";; {c}" for c in comments],
+                        f"global {name}",
+                        f"{name}:",
+                        code,
+                    ]
+                )
             )
 
         self.functions.append(name)

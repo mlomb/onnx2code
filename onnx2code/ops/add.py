@@ -12,14 +12,14 @@ class Add(Operation):
         assert len(self.outputs) == 1, "expected one output"
 
 
-@Add.variant("cpp")
-class AddCPP(Add):
+@Add.variant("c")
+class AddC(Add):
     def emit(self, gen: Generator) -> None:
         gen.add_function(
             "add",
             ["A", "B"],
             ["C"],
-            "cpp",
+            "c",
             f"for(int i = 0; i < {self.inputs[0].size}; i++) {{ C[i] = A[i] + B[i]; }}",
         )
 

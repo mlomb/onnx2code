@@ -19,29 +19,49 @@ class Identity(Operation):
         ), "input and output tensors should have the same size"
 
 
-@Identity.variant("cpp")
-class IdentityCPP(Identity):
+@Identity.variant("c")
+class IdentityC(Identity):
     def emit(self, gen: Generator) -> None:
+        size = self.inputs[0].size
+
         gen.add_function(
-            "identity",
+            f"identity_{size}",
             ["A"],
             ["B"],
-            "cpp",
-            f"memcpy(B, A, {self.inputs[0].size} * sizeof(float));",
+            "c",
+            f"""
+            for (int i = 0; i < {size}; i++) {{
+                B[i] = A[i];
+            }}
+            """,
         )
 
-        gen.add_call("identity", self.inputs[0], self.outputs[0])
+        gen.add_call(f"identity_{size}", self.inputs[0], self.outputs[0])
 
 
 @Identity.variant("asm")
 class IdentityASM(Identity):
     def emit(self, gen: Generator) -> None:
+        size = self.inputs[0].size
+
         gen.add_function(
-            "identity",
+            f"identity_{size}",
             ["A"],
             ["B"],
             "asm",
-            "mov rax, A\nmov rbx, B\nmov rcx, SIZE\nrep movsb",
+            "\n".join(
+                [
+                    f"mov rax, {size}",
+                    ".loop:",
+                    "movss xmm0, [rdi]",
+                    "add rdi, 4",
+                    "movss [rsi], xmm0",
+                    "add rsi, 4",
+                    "dec rax",
+                    "jnz .loop",
+                    "ret",
+                ]
+            ),
         )
 
-        gen.add_call("identity", self.inputs[0], self.outputs[0])
+        gen.add_call(f"identity_{size}", self.inputs[0], self.outputs[0])
