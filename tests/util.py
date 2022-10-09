@@ -5,8 +5,8 @@ import onnx
 from onnx2code.checker import check_model
 
 
-def check_keras(model: tf.keras.Model) -> None:
+def check_keras(model: tf.keras.Model, variations: list[str] = []) -> None:
     model_proto, _ = tf2onnx.convert.from_keras(model)
     if False:
         onnx.save_model(model_proto, "tmp/model.onnx")
-    check_model(model_proto)
+    check_model(model_proto, variations)

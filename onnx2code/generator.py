@@ -14,9 +14,10 @@ class Generator:
     Proto ref: https://github.com/onnx/onnx/blob/main/docs/IR.md
     """
 
-    def __init__(self, model_proto: onnx.ModelProto):
+    def __init__(self, model_proto: onnx.ModelProto, variations: list[str] = []):
         self.model_proto = model_proto
         self.tensors = {tensor.name: tensor for tensor in parse_tensors(model_proto)}
+        self.variations = variations + ["asm", "c"]
 
         # TODO: hacer mas lindo :)
         self.functions: list[str] = []
@@ -47,7 +48,7 @@ class Generator:
         from .ops.operation import Operation
 
         for node in self.model_proto.graph.node:
-            op = Operation.get(node.op_type, ["c", "asm"])(
+            op = Operation.get(node.op_type, self.variations)(
                 node,
                 [self.tensors[name] for name in node.input],
                 [self.tensors[name] for name in node.output],

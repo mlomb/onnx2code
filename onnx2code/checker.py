@@ -6,14 +6,16 @@ from .generator import Generator
 from .service import ModelService
 
 
-def check_model(model_proto: onnx.ModelProto, n_inputs: int = 10) -> None:
+def check_model(
+    model_proto: onnx.ModelProto, variations: list[str] = [], n_inputs: int = 10
+) -> None:
     """
     Checks if the generated output matches the reference (ONNX Runtime)
 
     :param n_inputs: random inputs will be generated
     """
 
-    result = Generator(model_proto).generate()
+    result = Generator(model_proto, variations).generate()
 
     ort_sess = onnxruntime.InferenceSession(model_proto.SerializeToString())
 
