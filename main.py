@@ -1,14 +1,13 @@
-import numpy as np
 import tf2onnx
 import tensorflow as tf
 
-from onnx2code.generator import Generator
-from onnx2code.service import ModelService
+# from onnx2code.generator import Generator
+# from onnx2code.service import ModelService
 from onnx2code.checker import check_model
 
 # Test model
 inputs = tf.keras.Input([3])
-outputs = tf.keras.layers.Lambda(lambda x: x + np.array([1, 2, 3]))(inputs)
+outputs = tf.keras.layers.Lambda(lambda x: x)(inputs)  #  + np.array([1, 2, 3])
 model = tf.keras.Model(inputs=[inputs], outputs=[outputs])
 model_proto, _ = tf2onnx.convert.from_keras(model)
 
