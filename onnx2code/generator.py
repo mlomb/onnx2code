@@ -55,7 +55,7 @@ class Generator:
             )
             op.emit(self)
 
-        source_c = ""
+        source_c = "#include <math.h>\n"
         source_asm = ""
 
         source_c += "\n".join(self.c_code_blocks)
@@ -64,7 +64,7 @@ class Generator:
         inputs = self.get_tensors_with_tag("input")
         outputs = self.get_tensors_with_tag("output")
 
-        source_c += f"""\n\nvoid inference(const float* weights, const float* inputs, float* outputs) {{"""
+        source_c += f"""\n\nvoid inference(const float* weights, const float* inputs, float* outputs) {{"""  # noqa: E501
 
         for tensor in self.tensors.values():
             if tensor.tag == "input":
@@ -76,7 +76,7 @@ class Generator:
         tensors_data_offset = 0
         for tensor in self.tensors.values():
             if tensor.data is not None:
-                source_c += f"\nconst float* {tensor.variable} = weights + {tensors_data_offset}; // {tensor.name} {tensor.shape}\n"
+                source_c += f"\nconst float* {tensor.variable} = weights + {tensors_data_offset}; // {tensor.name} {tensor.shape}\n"  # noqa: E501
                 tensors_data.append(tensor.data)
                 tensors_data_offset += tensor.data.size
 

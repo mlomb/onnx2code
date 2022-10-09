@@ -74,6 +74,7 @@ class ModelService:
             "-o",
             str(self.service_executable),
             "-lrt",  # for shm
+            "-lm",  # for math
             "-O0",
             "-g",
             "-fsanitize=address",
