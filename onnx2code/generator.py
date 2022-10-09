@@ -53,7 +53,7 @@ class Generator:
             )
             op.emit(self)
 
-        source_cpp = "\n".join(["#include <string.h>", ""])
+        source_cpp = ""
         source_hpp = ""
         source_asm = ""
 
@@ -67,11 +67,9 @@ class Generator:
 
         for tensor in self.tensors.values():
             if tensor.tag == "input":
-                source_cpp += (
-                    f"""\n\tconst float* {tensor.variable} = {tensor.tag}s + {0};"""
-                )
+                source_cpp += f"""\n\tconst float* {tensor.variable} = inputs + {0};"""
             elif tensor.tag == "output":
-                source_cpp += f"""\n\tfloat* {tensor.variable} = {tensor.tag}s + {0};"""
+                source_cpp += f"""\n\tfloat* {tensor.variable} = outputs + {0};"""
 
         tensors_data = []
         tensors_data_offset = 0
@@ -114,31 +112,31 @@ class Generator:
         decl = f"void {name}({input_list}, {output_list})"
 
         if lang == "cpp":
-            self.add_c_block(f"{decl} {{\n{code}\n}}")
+            self._add_c_block(f"{decl} {{\n{code}\n}}")
         elif lang == "asm":
-            self.add_c_block(f"{decl};")
-            self.add_asm_block(
+            self._add_c_block(f"{decl};")
+            self._add_asm_block(
                 "\n".join([f";; {decl}", f"global {name}", f"{name}:", code])
             )
 
         self.functions.append(name)
-
-    def add_c_block(self, code: str) -> None:
-        """
-        Add a C code block
-        """
-        if code not in self.c_code_blocks:
-            self.c_code_blocks.append(code)
-
-    def add_asm_block(self, code: str) -> None:
-        """
-        Add a ASM code block
-        """
-        if code not in self.asm_code_blocks:
-            self.asm_code_blocks.append(code)
 
     def add_call(self, function: str, *args: TensorInfo) -> None:
         """
         Add a function call
         """
         self.calls.append(f"""{function}({", ".join(t.variable for t in args)});""")
+
+    def _add_c_block(self, code: str) -> None:
+        """
+        Add a C code block
+        """
+        if code not in self.c_code_blocks:
+            self.c_code_blocks.append(code)
+
+    def _add_asm_block(self, code: str) -> None:
+        """
+        Add a ASM code block
+        """
+        if code not in self.asm_code_blocks:
+            self.asm_code_blocks.append(code)
