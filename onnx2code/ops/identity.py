@@ -1,5 +1,4 @@
-from ..generator import Generator
-from .operation import Operation
+from .operation import Operation, OpCall, OpImpl
 
 
 class Identity(Operation):
@@ -11,57 +10,49 @@ class Identity(Operation):
 
     node_types = {"Identity"}
 
-    def asserts(self) -> None:
+    def parse(self) -> None:
         assert len(self.inputs) == 1, "expected one input"
         assert len(self.outputs) == 1, "expected one output"
         assert (
             self.inputs[0].size == self.outputs[0].size
         ), "input and output tensors should have the same size"
 
+        self.size = self.inputs[0].size
+
+    def call(self) -> OpCall:
+        return OpCall(
+            name=f"identity_{self.size}",
+            params=["A", "B"],
+            inputs=self.inputs,
+            outputs=self.outputs,
+        )
+
 
 @Identity.variant("c")
 class IdentityC(Identity):
-    def emit(self, gen: Generator) -> None:
-        size = self.inputs[0].size
+    def impl(self) -> OpImpl:
+        source = f"""
+        for (int i = 0; i < {self.size}; i++) {{
+            B[i] = A[i];
+        }}
+        """
 
-        gen.add_function(
-            f"identity_{size}",
-            ["A"],
-            ["B"],
-            "c",
-            f"""
-            for (int i = 0; i < {size}; i++) {{
-                B[i] = A[i];
-            }}
-            """,
-        )
-
-        gen.add_call(f"identity_{size}", self.inputs[0], self.outputs[0])
+        return OpImpl(lang="c", source=source)
 
 
 @Identity.variant("asm")
 class IdentityASM(Identity):
-    def emit(self, gen: Generator) -> None:
-        size = self.inputs[0].size
+    def impl(self) -> OpImpl:
+        source = [
+            f"mov rax, {self.size}",
+            ".loop:",
+            "movss xmm0, [rdi]",
+            "add rdi, 4",
+            "movss [rsi], xmm0",
+            "add rsi, 4",
+            "dec rax",
+            "jnz .loop",
+            "ret",
+        ]
 
-        gen.add_function(
-            f"identity_{size}",
-            ["A"],
-            ["B"],
-            "asm",
-            "\n".join(
-                [
-                    f"mov rax, {size}",
-                    ".loop:",
-                    "movss xmm0, [rdi]",
-                    "add rdi, 4",
-                    "movss [rsi], xmm0",
-                    "add rsi, 4",
-                    "dec rax",
-                    "jnz .loop",
-                    "ret",
-                ]
-            ),
-        )
-
-        gen.add_call(f"identity_{size}", self.inputs[0], self.outputs[0])
+        return OpImpl(lang="asm", source=source)

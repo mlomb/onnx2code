@@ -5,6 +5,7 @@ import numpy as np
 
 from .tensor import TensorInfo, parse_tensors
 from .result import ModelResult
+from .ops.operation import Operation
 
 
 class Generator:
@@ -44,16 +45,22 @@ class Generator:
         """
         Generate C and ASM code to run the model
         """
-        # register models ↓
-        from .ops.operation import Operation
-
         for node in self.model_proto.graph.node:
             op = Operation.get(node.op_type, self.variations)(
                 node,
                 [self.tensors[name] for name in node.input],
                 [self.tensors[name] for name in node.output],
             )
-            op.emit(self)
+            impl = op.impl()
+            call = op.call()
+
+            if call is not None and impl is not None:
+                self.calls.append(
+                    f"""{call.name}({", ".join(t.variable for t in (call.inputs + call.outputs))});"""
+                )
+                if type(impl.source) == list:
+                    impl.source = "\n".join(impl.source)
+                self.add_function(call.name, ["A"], ["B"], impl.lang, impl.source)
 
         source_c = "#include <math.h>\n"
         source_asm = ""
@@ -142,18 +149,22 @@ class Generator:
         """
         Add a function call
         """
-        self.calls.append(f"""{function}({", ".join(t.variable for t in args)});""")
+        # self.calls.append(f"""{function}({", ".join(t.variable for t in args)});""")
 
-    def _add_c_block(self, code: str) -> None:
+    def _add_c_block(self, code: str | list[str]) -> None:
         """
         Add a C code block
         """
+        if type(code) == list:
+            code = "\n".join(code)
         if code not in self.c_code_blocks:
             self.c_code_blocks.append(code)
 
-    def _add_asm_block(self, code: str) -> None:
+    def _add_asm_block(self, code: str | list[str]) -> None:
         """
         Add a ASM code block
         """
+        if type(code) == list:
+            code = "\n".join(code)
         if code not in self.asm_code_blocks:
             self.asm_code_blocks.append(code)

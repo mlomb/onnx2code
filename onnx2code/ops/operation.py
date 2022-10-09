@@ -1,11 +1,25 @@
 from abc import ABC, abstractmethod
-from typing import Callable
+from dataclasses import dataclass
+from typing import Callable, Literal
 from collections import defaultdict
-
 import onnx
 
+
 from ..tensor import TensorInfo
-from ..generator import Generator
+
+
+@dataclass
+class OpCall:
+    name: str
+    params: list[str]
+    inputs: list[TensorInfo]
+    outputs: list[TensorInfo]
+
+
+@dataclass
+class OpImpl:
+    lang: Literal["c", "asm"]
+    source: str | list[str]
 
 
 class Operation(ABC):
@@ -21,14 +35,18 @@ class Operation(ABC):
         self.node = node
         self.inputs = inputs
         self.outputs = outputs
-        self.asserts()
+        self.parse()
 
     @abstractmethod
-    def asserts(self) -> None:
+    def parse(self) -> None:
         pass
 
     @abstractmethod
-    def emit(self, gen: Generator) -> None:
+    def call(self) -> OpCall | None:
+        return None
+
+    @abstractmethod
+    def impl(self) -> OpImpl | None:
         pass
 
     @classmethod

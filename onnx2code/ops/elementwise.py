@@ -1,7 +1,6 @@
 import numpy as np
 
-from .operation import Operation
-from ..generator import Generator
+from .operation import OpCall, OpImpl, Operation
 from ..util import get_attribute
 
 
@@ -14,20 +13,29 @@ class Elementwise(Operation):
 
     node_types = {"Relu", "Tanh", "Sigmoid", "Clip"}
 
-    def asserts(self) -> None:
+    def parse(self) -> None:
         assert len(self.inputs) == 1, "expected one input"
         assert len(self.outputs) == 1, "expected one output"
         assert (
             self.inputs[0].size == self.outputs[0].size
         ), "input and output tensors should have the same size"
 
+        self.op: str = self.node.op_type
+        self.size = self.inputs[0].size
+
+    def call(self) -> OpCall:
+        return OpCall(
+            name=f"{self.op}_{self.size}",
+            params=["A", "B"],
+            inputs=self.inputs,
+            outputs=self.outputs,
+        )
+
 
 @Elementwise.variant("c")
 class ElementwiseC(Elementwise):
-    def emit(self, gen: Generator) -> None:
-        size = self.inputs[0].size
-
-        op = self.node.op_type
+    def impl(self) -> OpImpl:
+        op, size = self.op, self.size
 
         if op == "Relu":
             impl = "A[i] > 0 ? A[i] : 0"
@@ -43,16 +51,10 @@ class ElementwiseC(Elementwise):
         else:
             raise RuntimeError(f"Unsupported elementwise: {op}")
 
-        gen.add_function(
-            f"{op}_{size}",
-            ["A"],
-            ["B"],
-            "c",
-            f"""
-            for(int i = 0; i < {size}; i++) {{
-                B[i] = {impl};
-            }}
-            """,
-        )
+        source = f"""
+        for(int i = 0; i < {size}; i++) {{
+            B[i] = {impl};
+        }}
+        """
 
-        gen.add_call(f"{op}_{size}", self.inputs[0], self.outputs[0])
+        return OpImpl(lang="c", source=source)
