@@ -4,6 +4,7 @@ from collections import defaultdict
 
 import onnx
 
+from ..tensor import TensorInfo
 from ..generator import Generator
 
 
@@ -11,10 +12,15 @@ class Operation(ABC):
     node_types: set[str]
     _registry: defaultdict[str, dict[str, type["Operation"]]] = defaultdict(dict)
 
-    def __init__(self, gen: Generator, node: onnx.NodeProto):
+    def __init__(
+        self,
+        node: onnx.NodeProto,
+        inputs: list[TensorInfo],
+        outputs: list[TensorInfo],
+    ):
         self.node = node
-        self.inputs = [gen.tensors[name] for name in node.input]
-        self.outputs = [gen.tensors[name] for name in node.output]
+        self.inputs = inputs
+        self.outputs = outputs
         self.asserts()
 
     @abstractmethod

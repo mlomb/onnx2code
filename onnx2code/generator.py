@@ -46,7 +46,11 @@ class Generator:
         from .ops.operation import Operation
 
         for node in self.model_proto.graph.node:
-            op = Operation.get(node.op_type, ["cpp", "asm"])(self, node)
+            op = Operation.get(node.op_type, ["cpp", "asm"])(
+                node,
+                [self.tensors[name] for name in node.input],
+                [self.tensors[name] for name in node.output],
+            )
             op.emit(self)
 
         source_cpp = "\n".join(["#include <string.h>", ""])
