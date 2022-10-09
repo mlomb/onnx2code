@@ -56,11 +56,12 @@ class Generator:
 
             if call is not None and impl is not None:
                 self.calls.append(
-                    f"""{call.name}({", ".join(t.variable for t in (call.inputs + call.outputs))});"""
+                    f"""{call.name}({", ".join(t.variable for t in call.inputs + call.outputs)});"""  # noqa: E501
                 )
-                if type(impl.source) == list:
-                    impl.source = "\n".join(impl.source)
-                self.add_function(call.name, ["A"], ["B"], impl.lang, impl.source)
+                source = (
+                    impl.source if type(impl.source) is str else "\n".join(impl.source)
+                )
+                self.add_function(call.name, ["A"], ["B"], impl.lang, source)
 
         source_c = "#include <math.h>\n"
         source_asm = ""
@@ -71,7 +72,7 @@ class Generator:
         inputs = self.get_tensors_with_tag("input")
         outputs = self.get_tensors_with_tag("output")
 
-        source_c += f"""\n\nvoid inference(const float* weights, const float* inputs, float* outputs) {{"""  # noqa: E501
+        source_c += """\n\nvoid inference(const float* weights, const float* inputs, float* outputs) {"""  # noqa: E501
 
         for tensor in self.tensors.values():
             if tensor.tag == "input":
@@ -151,20 +152,16 @@ class Generator:
         """
         # self.calls.append(f"""{function}({", ".join(t.variable for t in args)});""")
 
-    def _add_c_block(self, code: str | list[str]) -> None:
+    def _add_c_block(self, code: str) -> None:
         """
         Add a C code block
         """
-        if type(code) == list:
-            code = "\n".join(code)
         if code not in self.c_code_blocks:
             self.c_code_blocks.append(code)
 
-    def _add_asm_block(self, code: str | list[str]) -> None:
+    def _add_asm_block(self, code: str) -> None:
         """
         Add a ASM code block
         """
-        if type(code) == list:
-            code = "\n".join(code)
         if code not in self.asm_code_blocks:
             self.asm_code_blocks.append(code)

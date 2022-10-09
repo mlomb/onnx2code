@@ -11,7 +11,7 @@ from ..util import check_keras
         tf.keras.layers.Activation("tanh"),
         tf.keras.layers.Activation("sigmoid"),
     ],
-    ids=lambda x: x.activation.__name__,
+    ids=lambda x: str(x.activation.__name__),
 )
 def test_activations(activation: tf.keras.layers.Activation) -> None:
     input = tf.keras.Input(shape=(4, 5, 6))
