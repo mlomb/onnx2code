@@ -25,4 +25,4 @@ jobs:
         run: pipenv install
 
       - name: Run tests
-        run: pipenv run python -m pytest
+        run: pipenv run python -m pytest --no-header -v -W ignore::DeprecationWarning
