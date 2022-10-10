@@ -23,6 +23,9 @@ class TensorInfo:
     data: TensorData | None
     variable: str
 
+    def shape_str(self, sep: str = "x") -> str:
+        return sep.join(map(str, self.shape))
+
     @staticmethod
     def from_value(
         value_info: onnx.ValueInfoProto,

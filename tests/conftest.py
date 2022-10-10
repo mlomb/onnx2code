@@ -6,6 +6,6 @@ def shapes_id(shape: list[int]) -> str:
 
 
 def pytest_make_parametrize_id(config: Any, val: Any, argname: str) -> str | None:
-    if argname == "shape":
+    if argname.startswith("shape"):
         return shapes_id(val)
     return None
