@@ -1,24 +1,18 @@
 import operator
 from dataclasses import dataclass
 from functools import reduce
-
+import numpy.typing as npt
 import numpy as np
 import onnx
 from numpy.typing import NDArray
 
-
-# taken from onnx_simplifier.get_inputs
-def _get_model_inputs(model: onnx.ModelProto) -> list[onnx.ValueInfoProto]:
-    initializer_names = [x.name for x in model.graph.initializer]
-    return [ipt for ipt in model.graph.input if ipt.name not in initializer_names]
+from .util import get_model_inputs, get_shape_from_value_info_proto
 
 
-# taken from onnx_simplifier.get_shape_from_value_info_proto
-def _get_shape_from_value_info_proto(v: onnx.ValueInfoProto) -> list[int]:
-    # TODO: aca las dimensiones unknown las estamos poniendo en 1,
-    #       eso no esta bien. Hay que usar onnxsimplifier con el shape del input
-    #       en 1 y que infiera los sizes correctos para el resto de los tensors
-    return [dim.dim_value or 1 for dim in v.type.tensor_type.shape.dim]
+ShapesMap = dict[str, list[int]]
+TensorData = npt.NDArray[np.float32]
+TensorsMap = dict[str, TensorData]
+TensorsList = list[TensorData]
 
 
 @dataclass
@@ -41,7 +35,7 @@ class TensorInfo:
         Parses a ValueInfo and returns the tensor
         """
         name = value_info.name
-        shape = _get_shape_from_value_info_proto(value_info)
+        shape = get_shape_from_value_info_proto(value_info)
         data: NDArray[np.float32] | None = None
 
         for node in model_proto.graph.node:
@@ -85,7 +79,7 @@ def parse_tensors(model_proto: onnx.ModelProto) -> list[TensorInfo]:
     # input
     tensors.extend(
         TensorInfo.from_value(vi, "input", i, model_proto)
-        for i, vi in enumerate(_get_model_inputs(model_proto), start=0)
+        for i, vi in enumerate(get_model_inputs(model_proto), start=0)
     )
 
     # output

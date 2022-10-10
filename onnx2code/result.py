@@ -1,8 +1,6 @@
-import numpy as np
-import numpy.typing as npt
 from dataclasses import dataclass
 
-ShapesMap = dict[str, list[int]]
+from .tensor import ShapesMap, TensorData
 
 
 @dataclass
@@ -14,4 +12,4 @@ class ModelResult:
     source_c: str
     source_h: str
     source_asm: str
-    weights: npt.NDArray[np.float32]
+    weights: TensorData

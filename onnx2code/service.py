@@ -5,8 +5,8 @@ from typing import Any
 from multiprocessing import shared_memory
 import subprocess
 import numpy as np
-import numpy.typing as npt
 
+from .tensor import ShapesMap, TensorData, TensorsList, TensorsMap
 from .result import ModelResult
 
 
@@ -92,38 +92,25 @@ class ModelService:
 
     def _boot(self) -> None:
         """
-        Creates the shared memory blocks and starts the service subprocess
+        Creates the shared memory buffers and starts the service subprocess
         """
-        self.shm_inputs = shared_memory.SharedMemory(
-            "/onnx2code-inputs", create=True, size=self.result.inputs_size * 4
-        )
-        self.shm_outputs = shared_memory.SharedMemory(
-            "/onnx2code-outputs", create=True, size=self.result.outputs_size * 4
-        )
-        self.inputs_buffer: npt.NDArray[np.float32] = np.ndarray(
-            self.result.inputs_size, dtype=np.float32, buffer=self.shm_inputs.buf
-        )
-        self.outputs_buffer: npt.NDArray[np.float32] = np.ndarray(
-            self.result.outputs_size, dtype=np.float32, buffer=self.shm_outputs.buf
-        )
+        self.inputs_buffer = SharedNDArrays("/o2c-inputs", self.result.input_shapes)
+        self.outputs_buffer = SharedNDArrays("/o2c-outputs", self.result.ouput_shapes)
+
         self.process = subprocess.Popen(
             [self.service_executable, self.weights_file],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
         )
 
-    def inference(
-        self, inputs: dict[str, npt.NDArray[np.float32]]
-    ) -> list[npt.NDArray[np.float32]]:
+    def inference(self, inputs: TensorsMap) -> TensorsList:
         """
         Runs the model with the given inputs
-
-        TODO: support more than one input and output
         """
         assert len(inputs) == len(self.result.input_shapes)
 
         # load inputs into shared memory
-        self.inputs_buffer[:] = list(inputs.values())[0].reshape(-1)
+        self.inputs_buffer.set(inputs)
 
         # signal service that inputs are ready
         assert self.process.stdin and self.process.stdout
@@ -133,15 +120,46 @@ class ModelService:
         self.process.stdout.read(1)
 
         # read outputs from shared memory
-        return [self.outputs_buffer.reshape(list(self.result.ouput_shapes.values())[0])]
+        return self.outputs_buffer.get()
 
     def __exit__(self, _1: Any, _2: Any, _3: Any) -> None:
         # exit service
         self.process.terminate()
 
         # release shared memory
-        self.shm_inputs.unlink()
-        self.shm_outputs.unlink()
+        self.inputs_buffer.cleanup()
+        self.outputs_buffer.cleanup()
 
         # remove compilation files
         self.temp_dir.cleanup()
+
+
+class SharedNDArrays:
+    """
+    List of NDArray[float32]'s backed by shared memory
+    """
+
+    def __init__(self, name: str, shapes: ShapesMap):
+        self.shapes = shapes
+        self.elems = int(np.prod([*shapes.values()]))
+        self.size = self.elems * 4
+        self.offsets = np.cumsum([0, *[np.prod(s) for s in shapes.values()]])
+
+        self.shm = shared_memory.SharedMemory(name, create=True, size=self.size)
+        self.buffer: TensorData = np.ndarray(
+            self.elems, dtype=np.float32, buffer=self.shm.buf
+        )
+
+    def set(self, inputs: TensorsMap) -> None:
+        self.buffer[:] = np.concatenate([inp.reshape(-1) for inp in inputs.values()])
+
+    def get(self) -> TensorsList:
+        return [
+            self.buffer[self.offsets[i] : self.offsets[i + 1]].reshape(self.shapes[n])
+            for i, n in enumerate(self.shapes)
+        ]
+
+    def cleanup(self) -> None:
+        del self.buffer
+        self.shm.close()
+        self.shm.unlink()

@@ -19,11 +19,11 @@ import onnx  # noqa: E402
 import onnxruntime  # noqa: E402
 import tf2onnx  # noqa: E402
 import numpy as np  # noqa: E402
-import numpy.typing as npt  # noqa: E402
 
 from onnx2code.generator import Generator  # noqa: E402
 from onnx2code.result import ModelResult  # noqa: E402
 from onnx2code.service import ModelService  # noqa: E402
+from onnx2code.tensor import TensorsMap  # noqa: E402
 
 # Make tensorflow only use 1 CPU thread
 tf.config.threading.set_inter_op_parallelism_threads(1)
@@ -31,10 +31,8 @@ tf.config.threading.set_intra_op_parallelism_threads(1)
 tf.config.run_functions_eagerly(False)  # this line does not work 🤡
 tf.compat.v1.disable_eager_execution()
 
-Inputs = dict[str, npt.NDArray[np.float32]]
 
-
-def measure_tf(tf_model: tf.keras.Model, inputs: Inputs, runs: int) -> list[int]:
+def measure_tf(tf_model: tf.keras.Model, inputs: TensorsMap, runs: int) -> list[int]:
     times = []
 
     for _ in range(runs):
@@ -47,7 +45,7 @@ def measure_tf(tf_model: tf.keras.Model, inputs: Inputs, runs: int) -> list[int]
 
 
 def measure_onnxruntime(
-    model_proto: onnx.ModelProto, inputs: Inputs, runs: int
+    model_proto: onnx.ModelProto, inputs: TensorsMap, runs: int
 ) -> list[int]:
     times = []
     ort_sess = onnxruntime.InferenceSession(model_proto.SerializeToString())
@@ -62,7 +60,7 @@ def measure_onnxruntime(
 
 
 def measure_onnx2code(
-    model_result: ModelResult, inputs: Inputs, runs: int
+    model_result: ModelResult, inputs: TensorsMap, runs: int
 ) -> list[int]:
     times = []
 

@@ -42,8 +42,8 @@ void* read_file(const char* filename) {
 
 int main(int argc, char **argv) {
     const float* weights = (const float*) read_file(argv[1]);
-    float *inputs = (float*) map_shared_memory("/onnx2code-inputs");
-    float *outputs = (float*) map_shared_memory("/onnx2code-outputs");
+    float *inputs = (float*) map_shared_memory("/o2c-inputs");
+    float *outputs = (float*) map_shared_memory("/o2c-outputs");
 
     while(1) {
         // wait for data
