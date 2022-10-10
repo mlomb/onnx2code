@@ -8,7 +8,7 @@ class Broadcastable(Operation):
     https://github.com/onnx/onnx/blob/master/docs/Broadcasting.md
     """
 
-    node_types = {"Add"}
+    node_types = {"Add", "Sub", "Mul"}
 
     def parse(self) -> None:
         assert len(self.inputs) == 2, "expected two inputs"
@@ -22,7 +22,7 @@ class Broadcastable(Operation):
 
     def call(self) -> OpCall:
         return OpCall(
-            name=f"{self.op}_{self.inputs[0].shape_str()}",
+            name=f"{self.op}_{self.inputs[0].shape_str()}_{self.outputs[0].shape_str()}",
             params=["A", "B", "C"],
             inputs=self.inputs,
             outputs=self.outputs,
@@ -32,7 +32,20 @@ class Broadcastable(Operation):
 @Broadcastable.variant("c")
 class BroadcastableC(Broadcastable):
     def impl(self) -> OpImpl:
-
         source = ""
+
+        symbol = {
+            "Add": "+",
+            "Sub": "-",
+            "Mul": "*",
+        }[self.op]
+
+        if self.b_is_scalar:
+            source += f"""
+            const float D = B[0];
+            for (int i = 0; i < {self.inputs[0].size}; i++) {{
+                C[i] = A[i] {symbol} D;
+            }}
+            """
 
         return OpImpl(lang="c", source=source)
