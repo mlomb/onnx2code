@@ -155,7 +155,9 @@ class SharedNDArrays:
 
     def get(self) -> TensorsList:
         return [
-            self.buffer[self.offsets[i] : self.offsets[i + 1]].reshape(self.shapes[n])
+            self.buffer[self.offsets[i] : self.offsets[i + 1]].reshape(  # noqa: E203
+                self.shapes[n]
+            )
             for i, n in enumerate(self.shapes)
         ]
 
