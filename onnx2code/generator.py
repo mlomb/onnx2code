@@ -95,8 +95,6 @@ class Generator:
         return ModelResult(
             input_shapes={tensor.name: tensor.shape for tensor in inputs},
             ouput_shapes={tensor.name: tensor.shape for tensor in outputs},
-            inputs_size=sum([tensor.size for tensor in inputs]),
-            outputs_size=sum([tensor.size for tensor in outputs]),
             source_c=source_c,
             source_h="extern void inference(const float* weights, const float* inputs, float* outputs);",  # noqa: E501
             source_asm=source_asm,

@@ -7,8 +7,6 @@ from .tensor import ShapesMap, TensorData
 class ModelResult:
     input_shapes: ShapesMap
     ouput_shapes: ShapesMap
-    inputs_size: int
-    outputs_size: int
     source_c: str
     source_h: str
     source_asm: str
