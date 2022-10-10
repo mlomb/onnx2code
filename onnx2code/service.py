@@ -141,9 +141,9 @@ class SharedNDArrays:
 
     def __init__(self, name: str, shapes: ShapesMap):
         self.shapes = shapes
-        self.elems = int(np.prod([*shapes.values()]))
-        self.size = self.elems * 4
         self.offsets = np.cumsum([0, *[np.prod(s) for s in shapes.values()]])
+        self.elems = self.offsets[-1]
+        self.size = self.elems * 4
 
         self.shm = shared_memory.SharedMemory(name, create=True, size=self.size)
         self.buffer: TensorData = np.ndarray(
