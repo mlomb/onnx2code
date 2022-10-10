@@ -1,29 +1,28 @@
 {
-    "files.exclude": {
-        ".git/": true,
-        "**/__pycache__/": true,
-        "**/.mypy_cache/": true,
-        "**/.pytest_cache/": true,
-        "**/.ipynb_checkpoints/": true,
-    },
-    "editor.tabSize": 4,
-    "editor.rulers": [
-        { "column": 88, "color": "#575a57" }
-    ],
-    "python.formatting.provider": "black",
-    "python.linting.flake8Enabled": true,
-    "python.linting.mypyEnabled": true,
-    "python.linting.mypyArgs": [
-        "--follow-imports=silent",
-        "--ignore-missing-imports",
-        "--show-column-numbers",
-        "--no-pretty",
-        "--strict"
-    ],
-    "python.linting.enabled": true,
-    "python.testing.pytestArgs": [
-        "tests"
-    ],
-    "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true,
+  "files.exclude": {
+    ".git/": true,
+    "**/__pycache__/": true,
+    "**/.mypy_cache/": true,
+    "**/.pytest_cache/": true,
+    "**/.ipynb_checkpoints/": true
+  },
+  "editor.tabSize": 4,
+  "editor.rulers": [{ "column": 88, "color": "#575a57" }],
+  "python.formatting.provider": "black",
+  "python.linting.flake8Enabled": true,
+  "python.linting.mypyEnabled": true,
+  "python.linting.mypyArgs": [
+    "--follow-imports=silent",
+    "--ignore-missing-imports",
+    "--show-column-numbers",
+    "--no-pretty",
+    "--strict"
+  ],
+  "python.linting.enabled": true,
+  "python.testing.pytestArgs": ["tests"],
+  "python.testing.unittestEnabled": false,
+"python.testing.pytestEnabled": true,
+"python.linting.flake8Args": [
+    "--ignore=E203"
+]
 }
