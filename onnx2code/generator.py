@@ -1,11 +1,15 @@
-from typing import Literal
-from textwrap import dedent, indent
+from textwrap import indent
 import onnx
 import numpy as np
 
-from .tensor import TensorInfo, parse_tensors
+from .tensor import TensorData, parse_tensors
 from .result import ModelResult
-from .ops.operation import Operation
+from .ops.operation import Operation, OpCall, OpImpl
+
+REGISTER_ORDER = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]
+INFERENCE_SIGNATURE = (
+    "void inference(const float* weights, const float* inputs, float* outputs)"
+)
 
 
 class Generator:
@@ -20,14 +24,8 @@ class Generator:
         self.tensors = {tensor.name: tensor for tensor in parse_tensors(model_proto)}
         self.variations = variations + ["asm", "c"]
 
-        # TODO: hacer mas lindo :)
-        self.functions: list[str] = []
-        self.c_code_blocks: list[str] = []
-        self.asm_code_blocks: list[str] = []
-        self.calls: list[str] = []
-
-    def get_tensors_with_tag(self, tag: str) -> list[TensorInfo]:
-        return [tensor for tensor in self.tensors.values() if tensor.tag == tag]
+        self.impls: dict[OpImpl, OpCall] = {}
+        self.calls: list[OpCall] = []
 
     def weld_tensors(self, name_from: str, name_to: str) -> None:
         """
@@ -55,111 +53,81 @@ class Generator:
             call = op.call()
 
             if call is not None and impl is not None:
-                self.calls.append(
-                    f"""{call.name}({", ".join(t.variable for t in call.inputs + call.outputs)});"""  # noqa: E501
-                )
-                source = (
-                    impl.source if type(impl.source) is str else "\n".join(impl.source)
-                )
-                self.add_function(call.name, ["A"], ["B"], impl.lang, source)
+                self.impls[impl] = call
+                self.calls.append(call)
 
-        source_c = "#include <math.h>\n"
-        source_asm = ""
-
-        source_c += "\n".join(self.c_code_blocks)
-        source_asm += "\n".join(self.asm_code_blocks)
-
-        inputs = self.get_tensors_with_tag("input")
-        outputs = self.get_tensors_with_tag("output")
-
-        source_c += """\n\nvoid inference(const float* weights, const float* inputs, float* outputs) {"""  # noqa: E501
-
-        for tensor in self.tensors.values():
-            if tensor.tag == "input":
-                source_c += f"""\n\tconst float* {tensor.variable} = inputs + {0};"""
-            elif tensor.tag == "output":
-                source_c += f"""\n\tfloat* {tensor.variable} = outputs + {0};"""
-
-        tensors_data = []
-        tensors_data_offset = 0
-        for tensor in self.tensors.values():
-            if tensor.data is not None:
-                source_c += f"\nconst float* {tensor.variable} = weights + {tensors_data_offset}; // {tensor.name} {tensor.shape}\n"  # noqa: E501
-                tensors_data.append(tensor.data)
-                tensors_data_offset += tensor.data.size
-
-        source_c += "\n\n    "
-        source_c += "\n    ".join([call for call in self.calls])
-        source_c += "\n}"
+        inputs = [tensor for tensor in self.tensors.values() if tensor.tag == "input"]
+        outputs = [tensor for tensor in self.tensors.values() if tensor.tag == "output"]
 
         return ModelResult(
             input_shapes={tensor.name: tensor.shape for tensor in inputs},
             ouput_shapes={tensor.name: tensor.shape for tensor in outputs},
-            source_c=source_c,
-            source_h="extern void inference(const float* weights, const float* inputs, float* outputs);",  # noqa: E501
-            source_asm=source_asm,
-            weights=np.array(tensors_data),
+            source_c=self._gen_c_source(),
+            source_h=f"extern {INFERENCE_SIGNATURE};",
+            source_asm=self._gen_asm_source(),
+            weights=self._gen_weights(),
         )
 
-    def add_function(
-        self,
-        name: str,
-        inputs: list[str],
-        outputs: list[str],
-        lang: Literal["c", "asm"],
-        code: str,
-    ) -> None:
-        """
-        Add a function definition
-        """
-        if name in self.functions:
-            return
+    def _gen_weights(self) -> TensorData:
+        return np.array(
+            [tensor.data for tensor in self.tensors.values() if tensor.data is not None]
+        )
 
-        code = indent(dedent(code), prefix=" " * 4)
-        input_list = ", ".join(f"const float* {name}" for name in inputs)
-        output_list = ", ".join(f"float* {name}" for name in outputs)
-        decl = f"void {name}({input_list}, {output_list})"
+    def _gen_c_source(self) -> str:
+        source = "#include <math.h>" + "\n" * 2
 
-        if lang == "c":
-            self._add_c_block(f"{decl} {{{code}}}")
-        elif lang == "asm":
-            self._add_c_block(f"extern {decl};")
+        for impl, call in self.impls.items():
+            if impl.lang == "asm":
+                source += f"extern {call.signature()};"
 
-            register_order = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]
+        for impl, call in self.impls.items():
+            if impl.lang == "c":
+                source += call.signature() + " {"
+                source += indent(impl.full_source(), prefix=" " * 4)
+                source += "}"
 
-            comments = [decl]
-            for i, var_name in enumerate(inputs + outputs):
-                comments.append(f"{var_name}: {register_order[i]}")
+        inference_source = ""
+        # build tensor variables
+        for tensor in self.tensors.values():
+            decl = "const " if tensor.tag == "input" else ""
+            decl += f"float* {tensor.variable} = "
+            decl += {
+                "input": "inputs",
+                "output": "outputs",
+                "weight": "weights",
+                None: "NULL",  # TODO: :)
+            }[tensor.tag]
+            decl += f" + {0};"
 
-            self._add_asm_block(
-                "\n".join(
+            inference_source += "\n" + decl
+
+        # make op calls
+        inference_source += "\n"
+        for call in self.calls:
+            inference_source += f"\n{call.invocation()};"
+
+        source += "\n" * 2
+        source += INFERENCE_SIGNATURE + " {"
+        source += indent(inference_source, prefix=" " * 4)
+        source += "\n}"
+
+        return source
+
+    def _gen_asm_source(self) -> str:
+        source = ""
+
+        for impl, call in self.impls.items():
+            if impl.lang == "asm":
+                comments = [call.signature()] + [
+                    f"{p}: {REGISTER_ORDER[i]}" for i, p in enumerate(call.params)
+                ]
+                source = "\n".join(
                     [
                         *[f";; {c}" for c in comments],
-                        f"global {name}",
-                        f"{name}:",
-                        code,
+                        f"global {call.name}",
+                        f"{call.name}:",
+                        indent(impl.full_source(), prefix=" " * 4),
                     ]
                 )
-            )
 
-        self.functions.append(name)
-
-    def add_call(self, function: str, *args: TensorInfo) -> None:
-        """
-        Add a function call
-        """
-        # self.calls.append(f"""{function}({", ".join(t.variable for t in args)});""")
-
-    def _add_c_block(self, code: str) -> None:
-        """
-        Add a C code block
-        """
-        if code not in self.c_code_blocks:
-            self.c_code_blocks.append(code)
-
-    def _add_asm_block(self, code: str) -> None:
-        """
-        Add a ASM code block
-        """
-        if code not in self.asm_code_blocks:
-            self.asm_code_blocks.append(code)
+        return source

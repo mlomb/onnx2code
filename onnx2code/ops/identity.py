@@ -43,7 +43,7 @@ class IdentityC(Identity):
 @Identity.variant("asm")
 class IdentityASM(Identity):
     def impl(self) -> OpImpl:
-        source = [
+        source = (
             f"mov rax, {self.size}",
             ".loop:",
             "movss xmm0, [rdi]",
@@ -53,6 +53,6 @@ class IdentityASM(Identity):
             "dec rax",
             "jnz .loop",
             "ret",
-        ]
+        )
 
         return OpImpl(lang="asm", source=source)

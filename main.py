@@ -22,5 +22,5 @@ model_proto, _ = tf2onnx.convert.from_keras(model)
 #        print(outputs)
 
 # quick test
-check_model(model_proto, n_inputs=1)
+check_model(model_proto, n_inputs=1, variations=["c"])
 print("OK")

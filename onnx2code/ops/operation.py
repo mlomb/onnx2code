@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from textwrap import dedent
 from typing import Callable, Literal
 from collections import defaultdict
 import onnx
@@ -15,11 +16,27 @@ class OpCall:
     inputs: list[TensorInfo]
     outputs: list[TensorInfo]
 
+    def signature(self) -> str:
+        params = ", ".join(
+            f"{'const ' if i < len(self.inputs) else ''}float* {name}"
+            for i, name in enumerate(self.params)
+        )
+        return f"void {self.name}({params})"
 
-@dataclass
+    def invocation(self) -> str:
+        return (
+            self.name + f"({', '.join(t.variable for t in self.inputs + self.outputs)})"
+        )
+
+
+@dataclass(frozen=True)
 class OpImpl:
     lang: Literal["c", "asm"]
-    source: str | list[str]
+    source: str | tuple[str, ...]
+
+    def full_source(self) -> str:
+        code = self.source if isinstance(self.source, str) else "\n".join(self.source)
+        return dedent(code)
 
 
 class Operation(ABC):
