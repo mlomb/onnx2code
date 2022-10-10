@@ -1,7 +1,6 @@
 import operator
 from dataclasses import dataclass
 from functools import reduce
-import numpy.typing as npt
 import numpy as np
 import onnx
 from numpy.typing import NDArray
@@ -10,7 +9,7 @@ from .util import get_model_inputs, get_shape_from_value_info_proto
 
 
 ShapesMap = dict[str, list[int]]
-TensorData = npt.NDArray[np.float32]
+TensorData = NDArray[np.float32]
 TensorsMap = dict[str, TensorData]
 TensorsList = list[TensorData]
 
@@ -21,7 +20,7 @@ class TensorInfo:
     tag: str | None
     shape: list[int]
     size: int
-    data: NDArray[np.float32] | None
+    data: TensorData | None
     variable: str
 
     @staticmethod

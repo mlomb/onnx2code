@@ -35,10 +35,8 @@ class Elementwise(Operation):
 @Elementwise.variant("c")
 class ElementwiseC(Elementwise):
     def impl(self) -> OpImpl:
-        op, size = self.op, self.size
-
         impl: str
-        match op:
+        match self.op:
             case "Relu":
                 impl = "A[i] > 0 ? A[i] : 0"
             case "Tanh":
@@ -54,7 +52,7 @@ class ElementwiseC(Elementwise):
                 )
 
         source = f"""
-        for(int i = 0; i < {size}; i++) {{
+        for(int i = 0; i < {self.size}; i++) {{
             B[i] = {impl};
         }}
         """
