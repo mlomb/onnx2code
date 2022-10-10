@@ -9,3 +9,5 @@ lint:
 
 format:
 	black --verbose .
+
+precommit: lint format test
