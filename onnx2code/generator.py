@@ -1,11 +1,14 @@
 from collections import defaultdict
 from textwrap import indent
 import onnx
+import onnxsim.onnx_simplifier as onnx_simplifier
 import numpy as np
+
 
 from .tensor import TensorData, parse_tensors
 from .result import ModelResult
 from .ops.operation import Operation, OpCall, OpImpl
+from .util import get_fixed_input_shapes
 
 REGISTER_ORDER = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]
 INFERENCE_SIGNATURE = (
@@ -20,7 +23,12 @@ class Generator:
     Proto ref: https://github.com/onnx/onnx/blob/main/docs/IR.md
     """
 
-    def __init__(self, model_proto: onnx.ModelProto, variations: list[str] = []):
+    def __init__(self, _model_proto: onnx.ModelProto, variations: list[str] = []):
+        model_proto, check = onnx_simplifier.simplify(
+            model=_model_proto, input_shapes=get_fixed_input_shapes(_model_proto)
+        )
+        assert check, "ONNX model could not be simplified"
+
         self.model_proto = model_proto
         self.tensors = {tensor.name: tensor for tensor in parse_tensors(model_proto)}
         self.variations = variations + ["asm", "c"]
@@ -45,6 +53,22 @@ class Generator:
         Generate C and ASM code to run the model
         """
         for node in self.model_proto.graph.node:
+            if node.op_type in ["Reshape", "Squeeze", "Unsqueeze"]:
+                """
+                Reshape/Squeeze/Unsqueeze operator ⚠️ SPECIAL CASE ⚠️
+
+                https://github.com/onnx/onnx/blob/main/docs/Operators.md#reshape
+                https://github.com/onnx/onnx/blob/main/docs/Operators.md#squeeze
+                https://github.com/onnx/onnx/blob/main/docs/Operators.md#unsqueeze
+                """
+                assert len(node.output) == 1, "expected one output"
+
+                # Since it just reshapes the tensor, we don't need to do anything in runtime
+                # But we must must be weld the input and output tensors (variables/data)
+                self.weld_tensors(node.input[0], node.output[0])
+
+                continue
+
             op = Operation.get(node.op_type, self.variations)(
                 node,
                 [self.tensors[name] for name in node.input],

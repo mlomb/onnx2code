@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 import onnx
 
 
@@ -10,10 +10,48 @@ def get_model_inputs(model: onnx.ModelProto) -> list[onnx.ValueInfoProto]:
 
 # taken from onnx_simplifier.get_shape_from_value_info_proto
 def get_shape_from_value_info_proto(v: onnx.ValueInfoProto) -> list[int]:
-    # TODO: aca las dimensiones unknown las estamos poniendo en 1,
-    #       eso no esta bien. Hay que usar onnxsimplifier con el shape del input
-    #       en 1 y que infiera los sizes correctos para el resto de los tensors
-    return [dim.dim_value or 1 for dim in v.type.tensor_type.shape.dim]
+    return [dim.dim_value for dim in v.type.tensor_type.shape.dim]
+
+
+# taken from onnx_simplifier.get_value_info_all
+def get_value_info_all(m: onnx.ModelProto, name: str) -> Optional[onnx.ValueInfoProto]:
+    for v in m.graph.value_info:
+        if v.name == name:
+            return v
+
+    for v in m.graph.input:
+        if v.name == name:
+            return v
+
+    for v in m.graph.output:
+        if v.name == name:
+            return v
+
+    return None
+
+
+# taken from onnx_simplifier.get_shape
+def get_shape(m: onnx.ModelProto, name: str) -> list[int]:
+    v = get_value_info_all(m, name)
+    if v is not None:
+        return get_shape_from_value_info_proto(v)
+    raise RuntimeError('Cannot get shape of "{}"'.format(name))
+
+
+def get_fixed_input_shapes(onnx_model: onnx.ModelProto) -> dict[str, list[int]]:
+    """
+    Returns a map with the input name as key and the shape of the input fixed to one batch.
+    For example, if one of the inputs of the model is [None, 32, 32, 3],
+    the resulting shape for that input will be [1, 32, 32, 3].
+    """
+
+    def fix_shape(shape: list[int]) -> list[int]:
+        return [1 if (d == 0 or d is None) else d for d in shape]
+
+    return {
+        tensor.name: fix_shape(get_shape(onnx_model, tensor.name))
+        for tensor in get_model_inputs(onnx_model)
+    }
 
 
 def get_attribute(node: onnx.NodeProto, name: str, default: Any = None) -> Any:
