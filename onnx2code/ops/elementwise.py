@@ -37,19 +37,21 @@ class ElementwiseC(Elementwise):
     def impl(self) -> OpImpl:
         op, size = self.op, self.size
 
-        if op == "Relu":
-            impl = "A[i] > 0 ? A[i] : 0"
-        elif op == "Tanh":
-            impl = "tanh(A[i])"
-        elif op == "Sigmoid":
-            impl = "1.0f / (1.0f + exp(-A[i]))"
-        elif op == "Clip":  # TODO: test!
-            finfo = np.finfo(dtype=np.float32)
-            min = get_attribute(self.node, "min", finfo.min)
-            max = get_attribute(self.node, "max", finfo.max)
-            impl = "A[i] < {} ? {} : A[i] > {} ? {} : A[i]".format(min, min, max, max)
-        else:
-            raise RuntimeError(f"Unsupported elementwise: {op}")
+        impl: str
+        match op:
+            case "Relu":
+                impl = "A[i] > 0 ? A[i] : 0"
+            case "Tanh":
+                impl = "tanh(A[i])"
+            case "Sigmoid":
+                impl = "1.0f / (1.0f + exp(-A[i]))"
+            case "Clip":
+                finfo = np.finfo(dtype=np.float32)
+                min = get_attribute(self.node, "min", finfo.min)
+                max = get_attribute(self.node, "max", finfo.max)
+                impl = "A[i] < {} ? {} : A[i] > {} ? {} : A[i]".format(
+                    min, min, max, max
+                )
 
         source = f"""
         for(int i = 0; i < {size}; i++) {{
