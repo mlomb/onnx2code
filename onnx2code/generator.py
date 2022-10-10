@@ -1,3 +1,4 @@
+from collections import defaultdict
 from textwrap import indent
 import onnx
 import numpy as np
@@ -87,17 +88,17 @@ class Generator:
                 source += "}"
 
         inference_source = ""
+        offsets: defaultdict[str, int] = defaultdict(int)
         # build tensor variables
         for tensor in self.tensors.values():
+            if tensor.tag is None:
+                continue
+
             decl = "const " if tensor.tag == "input" else ""
             decl += f"float* {tensor.variable} = "
-            decl += {
-                "input": "inputs",
-                "output": "outputs",
-                "weight": "weights",
-                None: "NULL",  # TODO: :)
-            }[tensor.tag]
-            decl += f" + {0};"
+            decl += f"{tensor.tag}s"
+            decl += f" + {offsets[tensor.tag]};"
+            offsets[tensor.tag] += tensor.size
 
             inference_source += "\n" + decl
 
