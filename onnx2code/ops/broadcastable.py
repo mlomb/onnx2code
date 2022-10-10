@@ -13,9 +13,6 @@ class Broadcastable(Operation):
     def parse(self) -> None:
         assert len(self.inputs) == 2, "expected two inputs"
         assert len(self.outputs) == 1, "expected one output"
-        assert (
-            self.inputs[0].size == self.outputs[0].size
-        ), "input and output tensors should have the same size"
 
         self.op: str = self.node.op_type
         self.b_is_scalar = self.inputs[1].size == 1
