@@ -1,10 +1,14 @@
 import operator
 from dataclasses import dataclass
 from functools import reduce
+
 import numpy as np
 import onnx
+from numpy.typing import NDArray
 
-from .util import TensorData, get_model_inputs, get_shape_from_value_info_proto
+from .util import get_model_inputs, get_shape_from_value_info_proto
+
+TensorData = NDArray[np.float32]
 
 
 @dataclass

@@ -8,7 +8,8 @@ import numpy as np
 from .tensor import parse_tensors
 from .result import ModelResult
 from .ops.operation import Operation, OpCall, OpImpl
-from .util import get_fixed_input_shapes, TensorData
+from .util import get_fixed_input_shapes
+from .tensor import TensorData
 
 REGISTER_ORDER = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]
 INFERENCE_SIGNATURE = (

@@ -1,13 +1,18 @@
+import subprocess
 import tempfile
+from multiprocessing import shared_memory
 from pathlib import Path
 from subprocess import call
 from typing import Any
-from multiprocessing import shared_memory
-import subprocess
+
 import numpy as np
 
-from .util import ShapesMap, TensorData, TensorsList, TensorsMap
 from .result import ModelResult
+from .util import ShapesMap
+from .tensor import TensorData
+
+TensorsMap = dict[str, TensorData]
+TensorsList = list[TensorData]
 
 
 class ModelService:

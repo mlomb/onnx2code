@@ -50,6 +50,8 @@ class ElementwiseC(Elementwise):
                 impl = "A[i] < {} ? {} : A[i] > {} ? {} : A[i]".format(
                     min, min, max, max
                 )
+            case _:
+                raise NotImplementedError(f"ElementwiseC: {self.op}")
 
         source = f"""
         for(int i = 0; i < {self.size}; i++) {{

@@ -1,14 +1,9 @@
 from typing import Any, Optional
 
-import numpy as np
 import onnx
-from numpy.typing import NDArray
 
 TensorShape = list[int]
 ShapesMap = dict[str, TensorShape]
-TensorData = NDArray[np.float32]
-TensorsMap = dict[str, TensorData]
-TensorsList = list[TensorData]
 
 
 # taken from onnx_simplifier.get_inputs
