@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from .tensor import ShapesMap, TensorData
+from .util import ShapesMap, TensorData
 
 
 @dataclass

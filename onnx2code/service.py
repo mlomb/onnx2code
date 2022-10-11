@@ -6,7 +6,7 @@ from multiprocessing import shared_memory
 import subprocess
 import numpy as np
 
-from .tensor import ShapesMap, TensorData, TensorsList, TensorsMap
+from .util import ShapesMap, TensorData, TensorsList, TensorsMap
 from .result import ModelResult
 
 

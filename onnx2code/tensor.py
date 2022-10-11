@@ -3,15 +3,8 @@ from dataclasses import dataclass
 from functools import reduce
 import numpy as np
 import onnx
-from numpy.typing import NDArray
 
-from .util import get_model_inputs, get_shape_from_value_info_proto
-
-
-ShapesMap = dict[str, list[int]]
-TensorData = NDArray[np.float32]
-TensorsMap = dict[str, TensorData]
-TensorsList = list[TensorData]
+from .util import TensorData, get_model_inputs, get_shape_from_value_info_proto
 
 
 @dataclass
@@ -38,7 +31,7 @@ class TensorInfo:
         """
         name = value_info.name
         shape = get_shape_from_value_info_proto(value_info)
-        data: NDArray[np.float32] | None = None
+        data: TensorData | None = None
 
         for node in model_proto.graph.node:
             if node.op_type == "Constant" and node.output[0] == name:
@@ -59,7 +52,7 @@ class TensorInfo:
         Parses a TensorProto and returns the tensor
         """
         shape = [dim for dim in initializer.dims]
-        data: NDArray[np.float32] = onnx.numpy_helper.to_array(initializer)
+        data = onnx.numpy_helper.to_array(initializer)
         assert list(data.shape) == shape, "Tensor shape and data shape should match"
         return TensorInfo(
             name=initializer.name,

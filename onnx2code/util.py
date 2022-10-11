@@ -1,5 +1,14 @@
 from typing import Any, Optional
+
+import numpy as np
 import onnx
+from numpy.typing import NDArray
+
+TensorShape = list[int]
+ShapesMap = dict[str, TensorShape]
+TensorData = NDArray[np.float32]
+TensorsMap = dict[str, TensorData]
+TensorsList = list[TensorData]
 
 
 # taken from onnx_simplifier.get_inputs
@@ -9,7 +18,7 @@ def get_model_inputs(model: onnx.ModelProto) -> list[onnx.ValueInfoProto]:
 
 
 # taken from onnx_simplifier.get_shape_from_value_info_proto
-def get_shape_from_value_info_proto(v: onnx.ValueInfoProto) -> list[int]:
+def get_shape_from_value_info_proto(v: onnx.ValueInfoProto) -> TensorShape:
     return [dim.dim_value for dim in v.type.tensor_type.shape.dim]
 
 
@@ -31,16 +40,18 @@ def get_value_info_all(m: onnx.ModelProto, name: str) -> Optional[onnx.ValueInfo
 
 
 # taken from onnx_simplifier.get_shape
-def get_shape(m: onnx.ModelProto, name: str) -> list[int]:
+def get_shape(m: onnx.ModelProto, name: str) -> TensorShape:
     v = get_value_info_all(m, name)
     if v is not None:
         return get_shape_from_value_info_proto(v)
     raise RuntimeError('Cannot get shape of "{}"'.format(name))
 
 
-def get_fixed_input_shapes(onnx_model: onnx.ModelProto) -> dict[str, list[int]]:
+def get_fixed_input_shapes(onnx_model: onnx.ModelProto) -> ShapesMap:
     """
-    Returns a map with the input name as key and the shape of the input fixed to one batch.
+    Returns a map with the input name as key and the shape of the input
+    fixed to one batch.
+
     For example, if one of the inputs of the model is [None, 32, 32, 3],
     the resulting shape for that input will be [1, 32, 32, 3].
     """

@@ -5,10 +5,10 @@ import onnxsim.onnx_simplifier as onnx_simplifier
 import numpy as np
 
 
-from .tensor import TensorData, parse_tensors
+from .tensor import parse_tensors
 from .result import ModelResult
 from .ops.operation import Operation, OpCall, OpImpl
-from .util import get_fixed_input_shapes
+from .util import get_fixed_input_shapes, TensorData
 
 REGISTER_ORDER = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]
 INFERENCE_SIGNATURE = (
