@@ -1,8 +1,7 @@
-import tensorflow as tf
 import pytest
+import tensorflow as tf
 
 from ..util import check_keras
-
 
 shapes = [[1], [2, 3], [4, 5, 6]]  # scalar, 2d, 3d
 

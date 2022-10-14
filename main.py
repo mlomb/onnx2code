@@ -1,5 +1,5 @@
-import tf2onnx
 import tensorflow as tf
+import tf2onnx
 
 # from onnx2code.generator import Generator
 # from onnx2code.service import ModelService

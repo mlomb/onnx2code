@@ -1,5 +1,5 @@
-import tensorflow as tf
 import pytest
+import tensorflow as tf
 
 from ..util import check_keras
 

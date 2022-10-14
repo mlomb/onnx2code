@@ -14,11 +14,12 @@ os.environ["OPENBLAS_NUM_THREADS"] = "1"
 sys.path.append("../")
 
 from time import perf_counter_ns  # noqa: E402
-import tensorflow as tf  # noqa: E402
+
+import numpy as np  # noqa: E402
 import onnx  # noqa: E402
 import onnxruntime  # noqa: E402
+import tensorflow as tf  # noqa: E402
 import tf2onnx  # noqa: E402
-import numpy as np  # noqa: E402
 
 from onnx2code.generator import Generator  # noqa: E402
 from onnx2code.result import ModelResult  # noqa: E402

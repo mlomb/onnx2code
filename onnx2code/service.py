@@ -8,8 +8,8 @@ from typing import Any
 import numpy as np
 
 from .result import ModelResult
-from .util import ShapesMap
 from .tensor import TensorData
+from .util import ShapesMap
 
 TensorsMap = dict[str, TensorData]
 TensorsList = list[TensorData]

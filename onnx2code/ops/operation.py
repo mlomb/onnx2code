@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
+from collections import defaultdict
 from dataclasses import dataclass
 from textwrap import dedent
 from typing import Callable, Literal
-from collections import defaultdict
-import onnx
 
+import onnx
 
 from ..tensor import TensorInfo
 
