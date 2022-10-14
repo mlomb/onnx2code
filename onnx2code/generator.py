@@ -29,7 +29,7 @@ class Generator:
         )
         assert check, "ONNX model could not be simplified"
 
-        if True:
+        if False:
             onnx.save_model(model_proto, "tmp/model.onnx")
 
         self.model_proto = model_proto
