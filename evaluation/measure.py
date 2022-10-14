@@ -23,8 +23,7 @@ import tf2onnx  # noqa: E402
 
 from onnx2code.generator import Generator  # noqa: E402
 from onnx2code.result import ModelResult  # noqa: E402
-from onnx2code.service import ModelService  # noqa: E402
-from onnx2code.tensor import TensorsMap  # noqa: E402
+from onnx2code.service import ModelService, TensorsMap  # noqa: E402
 
 # Make tensorflow only use 1 CPU thread
 tf.config.threading.set_inter_op_parallelism_threads(1)
