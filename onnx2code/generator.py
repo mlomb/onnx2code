@@ -20,7 +20,15 @@ class Generator:
     Proto ref: https://github.com/onnx/onnx/blob/main/docs/IR.md
     """
 
-    def __init__(self, model_proto: onnx.ModelProto, variations: list[str] = []):
+    def __init__(self, _model_proto: onnx.ModelProto, variations: list[str] = []):
+        model_proto, check = onnx_simplifier.simplify(
+            model=_model_proto, input_shapes=get_fixed_input_shapes(_model_proto)
+        )
+        assert check, "ONNX model could not be simplified"
+
+        if True:
+            onnx.save_model(model_proto, "tmp/model.onnx")
+
         self.model_proto = model_proto
         self.tensors = {tensor.name: tensor for tensor in parse_tensors(model_proto)}
         self.variations = variations + ["asm", "c"]
@@ -38,7 +46,7 @@ class Generator:
         :raises KeyError: If the tensor names are not found
         """
 
-        self.tensors[name_from].variable = self.tensors[name_to].variable
+        self.tensors[name_to].variable = self.tensors[name_from].variable
 
     def generate(self) -> ModelResult:
         """
