@@ -36,7 +36,7 @@ class OpImpl:
 
     def full_source(self) -> str:
         code = self.source if isinstance(self.source, str) else "\n".join(self.source)
-        return dedent(code)
+        return dedent(code).strip().strip("\n")
 
 
 class Operation(ABC):

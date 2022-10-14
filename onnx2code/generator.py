@@ -110,9 +110,9 @@ class Generator:
 
         for impl, call in self.impls.items():
             if impl.lang == "c":
-                source += call.signature() + " {"
+                source += call.signature() + " {\n"
                 source += indent(impl.full_source(), prefix=" " * 4)
-                source += "}"
+                source += "\n}"
 
         inference_source = ""
         offsets: defaultdict[str, int] = defaultdict(int)

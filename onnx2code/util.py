@@ -1,5 +1,6 @@
 from typing import Any, Optional
 
+import numpy as np
 import onnx
 
 TensorShape = list[int]
@@ -69,3 +70,33 @@ def get_attribute(node: onnx.NodeProto, name: str, default: Any = None) -> Any:
         if attr.name == name:
             return onnx.helper.get_attribute_value(attr)
     return default
+
+
+def compute_strides(shape: list[int]) -> list[int]:
+    """
+    Returns the strides of the given shape.
+
+    For example, compute_strides([1, 2, 3]) returns [6, 3, 1].
+    """
+    strides = []
+    for i in range(len(shape)):
+        after = shape[i + 1 :]
+        if len(after) == 0:
+            strides.append(1)
+        else:
+            strides.append(int(np.prod(after)))
+    return strides
+
+
+def shape_str(shape: list[int], sep: str = "x") -> str:
+    """
+    Returns a string representation of the shape with the given separator
+
+    For example, shape_str([1, 2, 3], "x") returns "1x2x3"
+    """
+    size_str = ""
+    for dim in shape:
+        size_str += f"{int(dim)}{sep}"
+    if len(sep) > 0:
+        size_str = size_str[: -len(sep)]  # remove last {sep}
+    return size_str
