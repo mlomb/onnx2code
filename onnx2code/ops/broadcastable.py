@@ -1,4 +1,4 @@
-from .operation import OpCall, OpImpl, Operation
+from .operation import OpCall, Operation, OpImpl
 
 
 class Broadcastable(Operation):

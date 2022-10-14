@@ -1,15 +1,14 @@
 from collections import defaultdict
 from textwrap import indent
+
+import numpy as np
 import onnx
 import onnxsim.onnx_simplifier as onnx_simplifier
-import numpy as np
 
-
-from .tensor import parse_tensors
+from .ops.operation import OpCall, Operation, OpImpl
 from .result import ModelResult
-from .ops.operation import Operation, OpCall, OpImpl
+from .tensor import TensorData, parse_tensors
 from .util import get_fixed_input_shapes
-from .tensor import TensorData
 
 REGISTER_ORDER = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]
 INFERENCE_SIGNATURE = (

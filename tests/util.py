@@ -1,6 +1,6 @@
+import onnx
 import tensorflow as tf
 import tf2onnx
-import onnx
 
 from onnx2code.checker import check_model
 

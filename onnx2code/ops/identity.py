@@ -1,4 +1,4 @@
-from .operation import Operation, OpCall, OpImpl
+from .operation import OpCall, Operation, OpImpl
 
 
 class Identity(Operation):

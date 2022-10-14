@@ -1,7 +1,7 @@
 import numpy as np
 
-from .operation import OpCall, OpImpl, Operation
 from ..util import get_attribute
+from .operation import OpCall, Operation, OpImpl
 
 
 class Elementwise(Operation):
