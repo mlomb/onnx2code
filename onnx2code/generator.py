@@ -29,6 +29,9 @@ class Generator:
         )
         assert check, "ONNX model could not be simplified"
 
+        if True:
+            onnx.save_model(model_proto, "tmp/model.onnx")
+
         self.model_proto = model_proto
         self.tensors = {tensor.name: tensor for tensor in parse_tensors(model_proto)}
         self.variations = variations + ["asm", "c"]
@@ -46,7 +49,7 @@ class Generator:
         :raises KeyError: If the tensor names are not found
         """
 
-        self.tensors[name_from].variable = self.tensors[name_to].variable
+        self.tensors[name_to].variable = self.tensors[name_from].variable
 
     def generate(self) -> ModelResult:
         """
