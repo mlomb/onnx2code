@@ -1,4 +1,6 @@
+import os
 from collections import defaultdict
+from pathlib import Path
 from textwrap import indent
 
 import numpy as np
@@ -29,8 +31,11 @@ class Generator:
         )
         assert check, "ONNX model could not be simplified"
 
-        if False:
-            onnx.save_model(model_proto, "tmp/model.onnx")
+        # save model for later inspection
+        if os.getenv("ONNX2CODE_DEBUG", "0") == "1":
+            tmp = Path(__file__).parent.parent / "tmp"
+            tmp.mkdir(exist_ok=True)
+            onnx.save_model(model_proto, tmp / "model.onnx")
 
         self.model_proto = model_proto
         self.tensors = {tensor.name: tensor for tensor in parse_tensors(model_proto)}

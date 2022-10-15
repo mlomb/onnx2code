@@ -1,3 +1,4 @@
+import os
 import subprocess
 import tempfile
 from multiprocessing import shared_memory
@@ -37,9 +38,12 @@ class ModelService:
         return self
 
     def _compile(self) -> None:
-        # temp_dir = Path(self.temp_dir.name)
+        if os.getenv("ONNX2CODE_DEBUG", "0") == "1":
+            # save for later inspection
+            temp_dir = Path(__file__).parent.parent / "tmp/"
+        else:
+            temp_dir = Path(self.temp_dir.name)
 
-        temp_dir = Path("tmp/")
         temp_dir.mkdir(exist_ok=True)
 
         c_file = temp_dir / "model.c"
