@@ -1,4 +1,6 @@
+import os
 from collections import defaultdict
+from pathlib import Path
 from textwrap import indent
 
 import numpy as np
@@ -25,12 +27,16 @@ class Generator:
 
     def __init__(self, _model_proto: onnx.ModelProto, variations: list[str] = []):
         model_proto, check = onnx_simplifier.simplify(
-            model=_model_proto, input_shapes=get_fixed_input_shapes(_model_proto)
+            model=_model_proto,
+            overwrite_input_shapes=get_fixed_input_shapes(_model_proto),
         )
         assert check, "ONNX model could not be simplified"
 
-        if False:
-            onnx.save_model(model_proto, "tmp/model.onnx")
+        # save model for later inspection
+        if os.getenv("ONNX2CODE_DEBUG", "0") == "1":
+            tmp = Path(__file__).parent.parent / "tmp"
+            tmp.mkdir(exist_ok=True)
+            onnx.save_model(model_proto, tmp / "model.onnx")
 
         self.model_proto = model_proto
         self.tensors = {tensor.name: tensor for tensor in parse_tensors(model_proto)}
@@ -89,7 +95,7 @@ class Generator:
 
         return ModelResult(
             input_shapes={tensor.name: tensor.shape for tensor in inputs},
-            ouput_shapes={tensor.name: tensor.shape for tensor in outputs},
+            output_shapes={tensor.name: tensor.shape for tensor in outputs},
             source_c=self._gen_c_source(),
             source_h=f"extern {INFERENCE_SIGNATURE};",
             source_asm=self._gen_asm_source(),
