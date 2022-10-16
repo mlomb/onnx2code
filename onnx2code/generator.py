@@ -95,7 +95,7 @@ class Generator:
 
         return ModelResult(
             input_shapes={tensor.name: tensor.shape for tensor in inputs},
-            ouput_shapes={tensor.name: tensor.shape for tensor in outputs},
+            output_shapes={tensor.name: tensor.shape for tensor in outputs},
             source_c=self._gen_c_source(),
             source_h=f"extern {INFERENCE_SIGNATURE};",
             source_asm=self._gen_asm_source(),

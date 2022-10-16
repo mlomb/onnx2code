@@ -7,7 +7,7 @@ from .util import ShapesMap
 @dataclass
 class ModelResult:
     input_shapes: ShapesMap
-    ouput_shapes: ShapesMap
+    output_shapes: ShapesMap
     source_c: str
     source_h: str
     source_asm: str

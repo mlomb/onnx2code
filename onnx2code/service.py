@@ -104,7 +104,7 @@ class ModelService:
         Creates the shared memory buffers and starts the service subprocess
         """
         self.inputs_buffer = SharedNDArrays("/o2c-inputs", self.result.input_shapes)
-        self.outputs_buffer = SharedNDArrays("/o2c-outputs", self.result.ouput_shapes)
+        self.outputs_buffer = SharedNDArrays("/o2c-outputs", self.result.output_shapes)
 
         self.process = subprocess.Popen(
             [self.service_executable, self.weights_file],
