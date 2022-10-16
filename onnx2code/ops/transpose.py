@@ -26,7 +26,7 @@ class Transpose(Operation):
         return OpCall(
             name="_".join(
                 [
-                    "transpose",
+                    "Transpose",
                     shape_str(self.inputs[0].shape),
                     shape_str(self.outputs[0].shape),
                     shape_str(self.perm, sep=""),

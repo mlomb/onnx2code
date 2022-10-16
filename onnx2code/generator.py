@@ -10,7 +10,7 @@ import onnxsim.onnx_simplifier as onnx_simplifier
 from .ops.operation import OpCall, Operation, OpImpl
 from .result import ModelResult
 from .tensor import TensorData, parse_tensors
-from .util import get_fixed_input_shapes
+from .util import get_fixed_input_shapes, shape_str
 
 REGISTER_ORDER = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]
 INFERENCE_SIGNATURE = (
@@ -56,6 +56,7 @@ class Generator:
         """
 
         self.tensors[name_to].variable = self.tensors[name_from].variable
+        self.tensors[name_to].tag = "welded"
 
     def generate(self) -> ModelResult:
         """
@@ -103,8 +104,14 @@ class Generator:
         )
 
     def _gen_weights(self) -> TensorData:
-        return np.array(
-            [tensor.data for tensor in self.tensors.values() if tensor.data is not None]
+        return np.concatenate(
+            [
+                tensor.data.reshape(-1)
+                for tensor in self.tensors.values()
+                if tensor.tag == "weight" and tensor.data is not None
+            ]
+            # concatenate needs at least one array
+            + [np.array([], dtype=np.float32)],
         )
 
     def _gen_c_source(self) -> str:
@@ -118,22 +125,29 @@ class Generator:
             if impl.lang == "c":
                 source += call.signature() + " {\n"
                 source += indent(impl.full_source(), prefix=" " * 4)
-                source += "\n}"
+                source += "\n}\n"
 
         inference_source = ""
         offsets: defaultdict[str, int] = defaultdict(int)
         # build tensor variables
         for tensor in self.tensors.values():
-            if tensor.tag is None:
+            if tensor.tag in ["input", "output", "weight"]:
+                decl = "const " if tensor.tag != "input" else ""
+                decl += f"float* {tensor.variable} = "
+                decl += f"{tensor.tag}s"
+                decl += f" + {offsets[tensor.tag]};"
+
+                offsets[tensor.tag] += tensor.size
+
+            elif tensor.tag == "intermediate":
+                decl = f"float {tensor.variable}[{tensor.size}];"
+            else:
+                # welded
                 continue
 
-            decl = "const " if tensor.tag == "input" else ""
-            decl += f"float* {tensor.variable} = "
-            decl += f"{tensor.tag}s"
-            decl += f" + {offsets[tensor.tag]};"
-            offsets[tensor.tag] += tensor.size
-
-            inference_source += "\n" + decl
+            inference_source += (
+                f"\n{decl : <34} // ({shape_str(tensor.shape)}) {tensor.name}"
+            )
 
         # make op calls
         inference_source += "\n"
