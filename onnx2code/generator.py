@@ -27,7 +27,8 @@ class Generator:
 
     def __init__(self, _model_proto: onnx.ModelProto, variations: list[str] = []):
         model_proto, check = onnx_simplifier.simplify(
-            model=_model_proto, input_shapes=get_fixed_input_shapes(_model_proto)
+            model=_model_proto,
+            overwrite_input_shapes=get_fixed_input_shapes(_model_proto),
         )
         assert check, "ONNX model could not be simplified"
 
