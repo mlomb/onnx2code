@@ -103,8 +103,12 @@ class Generator:
         )
 
     def _gen_weights(self) -> TensorData:
-        return np.array(
-            [tensor.data for tensor in self.tensors.values() if tensor.data is not None]
+        return np.concatenate(
+            [
+                tensor.data.reshape(-1)
+                for tensor in self.tensors.values()
+                if tensor.tag is None and tensor.data is not None
+            ]
         )
 
     def _gen_c_source(self) -> str:
