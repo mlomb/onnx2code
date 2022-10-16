@@ -1,6 +1,7 @@
 import operator
 from dataclasses import dataclass
 from functools import reduce
+from typing import Literal
 
 import numpy as np
 import onnx
@@ -9,12 +10,13 @@ from numpy.typing import NDArray
 from .util import get_model_inputs, get_shape_from_value_info_proto
 
 TensorData = NDArray[np.float32]
+TensorTag = Literal["input", "output", "weight", "intermediate", "welded"]
 
 
 @dataclass
 class TensorInfo:
     name: str
-    tag: str | None
+    tag: TensorTag
     shape: list[int]
     size: int
     data: TensorData | None
@@ -26,7 +28,7 @@ class TensorInfo:
     @staticmethod
     def from_value(
         value_info: onnx.ValueInfoProto,
-        tag: str | None,
+        tag: TensorTag,
         var_index: int,
         model_proto: onnx.ModelProto,
     ) -> "TensorInfo":
@@ -40,6 +42,7 @@ class TensorInfo:
         for node in model_proto.graph.node:
             if node.op_type == "Constant" and node.output[0] == name:
                 data = np.array(node.attribute[0].t.float_data)
+                tag = "weight"
 
         return TensorInfo(
             name=name,
@@ -57,10 +60,11 @@ class TensorInfo:
         """
         shape = [dim for dim in initializer.dims]
         data = onnx.numpy_helper.to_array(initializer)
+        assert data is not None, "data should not be None"
         assert list(data.shape) == shape, "Tensor shape and data shape should match"
         return TensorInfo(
             name=initializer.name,
-            tag=None,
+            tag="weight",
             shape=shape,
             size=reduce(operator.mul, shape, 1),
             data=data,
@@ -89,7 +93,7 @@ def parse_tensors(model_proto: onnx.ModelProto) -> list[TensorInfo]:
 
     # intermediate
     tensors.extend(
-        TensorInfo.from_value(vi, None, i, model_proto)
+        TensorInfo.from_value(vi, "intermediate", i, model_proto)
         for i, vi in enumerate(model_proto.graph.value_info, start=len(tensors))
     )
 
