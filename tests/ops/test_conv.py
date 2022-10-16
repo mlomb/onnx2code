@@ -3,7 +3,6 @@ import tensorflow as tf
 
 from ..util import check_keras
 
-
 # @pytest.mark.parametrize("shape", [(4, 3, 1), (3, 4, 3), (10, 10, 5), (32, 32, 3)])
 # @pytest.mark.parametrize("kernel_size", [1, 2, 3])
 # @pytest.mark.parametrize("filters", [1, 2, 3, 10])

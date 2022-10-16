@@ -21,8 +21,8 @@ class Conv(Operation):
 
     def call(self) -> OpCall:
         return OpCall(
-            name=f"{self.op}_{self.inputs[0].shape_str()}_{self.outputs[0].shape_str()}",
-            params=["A", "B", "C"],
+            name=f"Conv_{self.inputs[0].shape_str()}_{self.inputs[1].shape_str()}",
+            params=["X", "W", "Y"],
             inputs=self.inputs,
             outputs=self.outputs,
         )
@@ -33,8 +33,8 @@ class ConvC(Conv):
     def impl(self) -> OpImpl:
         source = ""
 
-        source += f"""
-        ya kisieras
+        source += """
+        int pito;
         """
 
         return OpImpl(lang="c", source=source)
