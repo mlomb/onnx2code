@@ -39,7 +39,7 @@ class ConvC(Conv):
     def impl(self) -> OpImpl:
         # onnx is NCHW
         # N = self.X.shape[0]
-        # C = self.X.shape[1]
+        C = self.X.shape[1]
         H = self.X.shape[2]
         W = self.X.shape[3]
         F = self.W.shape[0]  # filters
@@ -52,7 +52,7 @@ class ConvC(Conv):
 
         input_strides = compute_strides(self.X.shape)
         output_strides = compute_strides(self.Y.shape)
-        kernel_strides = compute_strides((KC, KH, KW))
+        kernel_strides = compute_strides(self.W.shape)
 
         source = ""
 
@@ -64,19 +64,23 @@ class ConvC(Conv):
                     float accum = 0.0f;
 
                     // position in kernel
-                    for(int hh = 0; hh < {KH}; hh++) {{
-                        for(int ww = 0; ww < {KW}; ww++) {{
-                            const int ih = h + hh;
-                            const int iw = w + ww;
-                            if(ih >= 0 && ih < {H} && iw >= 0 && iw < {W}) {{
-                                accum += X[
-                                    ih * {input_strides[2]} +
-                                    iw * {input_strides[3]}
-                                ] * W[
-                                    f * {kernel_strides[0]} +
-                                    hh * {kernel_strides[1]} +
-                                    ww * {kernel_strides[2]}
-                                ];
+                    for(int cc = 0; cc < {KC}; cc++) {{
+                        for(int hh = 0; hh < {KH}; hh++) {{
+                            for(int ww = 0; ww < {KW}; ww++) {{
+                                const int ih = h + hh;
+                                const int iw = w + ww;
+                                if(ih >= 0 && ih < {H} && iw >= 0 && iw < {W}) {{
+                                    accum += X[
+                                        cc * {input_strides[1]} +
+                                        ih * {input_strides[2]} +
+                                        iw * {input_strides[3]}
+                                    ] * W[
+                                        f * {kernel_strides[0]} +
+                                        cc * {kernel_strides[1]} +
+                                        hh * {kernel_strides[2]} +
+                                        ww * {kernel_strides[3]}
+                                    ];
+                                }}
                             }}
                         }}
                     }}
