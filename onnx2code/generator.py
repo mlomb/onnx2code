@@ -132,7 +132,7 @@ class Generator:
         # build tensor variables
         for tensor in self.tensors.values():
             if tensor.tag in ["input", "output", "weight"]:
-                decl = "const " if tensor.tag != "input" else ""
+                decl = "const " if tensor.tag != "output" else ""
                 decl += f"float* {tensor.variable} = "
                 decl += f"{tensor.tag}s"
                 decl += f" + {offsets[tensor.tag]};"
