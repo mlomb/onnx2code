@@ -39,7 +39,7 @@ class ConvC(Conv):
     def impl(self) -> OpImpl:
         # onnx is NCHW
         # N = self.X.shape[0]
-        C = self.X.shape[1]
+        # C = self.X.shape[1]
         H = self.X.shape[2]
         W = self.X.shape[3]
         F = self.W.shape[0]  # filters
