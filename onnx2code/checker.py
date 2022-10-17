@@ -1,3 +1,7 @@
+import os
+import shutil
+from pathlib import Path
+
 import numpy as np
 import onnx
 import onnxruntime
@@ -32,4 +36,18 @@ def check_model(
 
             assert len(out1) == len(out2)
             for o1, o2 in zip(out1, out2):
-                assert np.allclose(o1, o2), "output mismatch"
+                correct = np.allclose(o1, o2)
+
+                if not correct and os.getenv("ONNX2CODE_DEBUG", "0") == "1":
+                    temp_dir = Path(__file__).parent.parent / "tmp/"
+                    inputs_np = np.concatenate(
+                        [inp.reshape(-1) for inp in inputs.values()]
+                    )
+                    inputs_np.tofile(temp_dir / "sample_inputs.bin")
+                    o2.reshape(-1).tofile(temp_dir / "sample_outputs.bin")
+                    shutil.copyfile(
+                        Path(__file__).parent / "debugger.c",
+                        temp_dir / "debugger.c",
+                    )
+
+                assert np.allclose(o1, o2, atol=1e-5), "output mismatch"
