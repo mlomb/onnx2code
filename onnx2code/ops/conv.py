@@ -1,4 +1,5 @@
 from onnx2code.util import compute_strides, get_attribute
+
 from .operation import OpCall, Operation, OpImpl
 
 
@@ -37,8 +38,8 @@ class Conv(Operation):
 class ConvC(Conv):
     def impl(self) -> OpImpl:
         # onnx is NCHW
-        N = self.X.shape[0]
-        C = self.X.shape[1]
+        # N = self.X.shape[0]
+        # C = self.X.shape[1]
         H = self.X.shape[2]
         W = self.X.shape[3]
         F = self.W.shape[0]  # filters
@@ -54,8 +55,6 @@ class ConvC(Conv):
         kernel_strides = compute_strides((KC, KH, KW))
 
         source = ""
-
-        # 1, 8, 28, 28
 
         source += f"""
         for(int f = 0; f < {F}; f++) {{
