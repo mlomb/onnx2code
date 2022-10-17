@@ -54,6 +54,9 @@ class Generator:
         :param name_to: Name of the destination tensor
         :raises KeyError: If the tensor names are not found
         """
+        if self.tensors[name_to].tag == "output":
+            self.weld_tensors(name_to, name_from)
+            return
 
         self.tensors[name_to].variable = self.tensors[name_from].variable
         self.tensors[name_to].tag = "welded"
