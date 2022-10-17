@@ -154,6 +154,12 @@ class SharedNDArrays:
         self.elems = self.offsets[-1]
         self.size = self.elems * 4
 
+        try:
+            shm = shared_memory.SharedMemory(name, create=False)
+            shm.unlink()
+        except FileNotFoundError:
+            pass
+
         self.shm = shared_memory.SharedMemory(name, create=True, size=self.size)
         self.buffer: TensorData = np.ndarray(
             self.elems, dtype=np.float32, buffer=self.shm.buf
