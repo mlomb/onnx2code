@@ -19,9 +19,9 @@ from ..util import check_keras
 # @pytest.mark.parametrize("use_bias", [False, True], ids=["no_bias", "bias"])
 
 
-@pytest.mark.parametrize("shape", [(14, 14, 8)])
+@pytest.mark.parametrize("shape", [(28, 28, 1), (14, 14, 8)])
 @pytest.mark.parametrize("kernel_size", [5])
-@pytest.mark.parametrize("filters", [16])
+@pytest.mark.parametrize("filters", [8, 16])
 @pytest.mark.parametrize("padding", ["same"])
 @pytest.mark.parametrize(
     "stride_and_dilation",
