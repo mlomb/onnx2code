@@ -25,7 +25,7 @@ void* map_shared_memory(const char* name) {
 }
 
 void* read_file(const char* filename) {
-    FILE *fp = fopen(filename, "r");
+    FILE *fp = fopen(filename, "rb");
     assert(fp != NULL);
 
     fseek(fp, 0, SEEK_END);
