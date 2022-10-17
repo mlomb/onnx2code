@@ -108,7 +108,9 @@ class Generator:
             [
                 tensor.data.reshape(-1)
                 for tensor in self.tensors.values()
-                if tensor.tag == "weight" and tensor.data is not None
+                if tensor.tag == "weight"
+                and tensor.data is not None
+                and tensor.data.dtype == np.float32
             ]
             # concatenate needs at least one array
             + [np.array([], dtype=np.float32)],
@@ -132,7 +134,14 @@ class Generator:
         # build tensor variables
         for tensor in self.tensors.values():
             if tensor.tag in ["input", "output", "weight"]:
-                decl = "const " if tensor.tag != "input" else ""
+                if (
+                    tensor.tag == "weight"
+                    and tensor.data is not None
+                    and tensor.data.dtype != np.float32
+                ):
+                    continue
+
+                decl = "const " if tensor.tag != "output" else ""
                 decl += f"float* {tensor.variable} = "
                 decl += f"{tensor.tag}s"
                 decl += f" + {offsets[tensor.tag]};"
