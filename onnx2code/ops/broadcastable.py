@@ -1,7 +1,6 @@
 from typing import Any
-import numpy as np
 
-from onnx2code.tensor import TensorData
+import numpy as np
 
 from .operation import OpCall, Operation, OpImpl
 

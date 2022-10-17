@@ -1,4 +1,3 @@
-import onnx
 import tensorflow as tf
 import tf2onnx
 
