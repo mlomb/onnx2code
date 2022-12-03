@@ -27,6 +27,7 @@ from ..util import check_keras
     "stride_and_dilation",
     [
         (1, 1),
+        (2, 1),
     ],
     ids=lambda x: f"s{x[0]}d{x[1]}",
 )

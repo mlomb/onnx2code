@@ -48,7 +48,7 @@ class ConvC(Conv):
         KW = self.W.shape[3]
 
         pads_start = [self.pads[0], self.pads[1]]
-        pads_end = [self.pads[2], self.pads[3]]
+        # pads_end = [self.pads[2], self.pads[3]]
 
         input_strides = compute_strides(self.X.shape)
         output_strides = compute_strides(self.Y.shape)
@@ -59,16 +59,16 @@ class ConvC(Conv):
         source += f"""
         for(int f = 0; f < {F}; f++) {{
             // start position of kernel
-            for(int h = {-pads_start[0]}; h <= {H - KH + pads_end[0]}; h += {self.strides[0]}) {{
-                for(int w = {-pads_start[1]}; w <= {W - KW + pads_end[1]}; w += {self.strides[1]}) {{
+            for(int h = 0; h < {self.Y.shape[2]}; h++) {{
+                for(int w = 0; w < {self.Y.shape[3]}; w++) {{
                     float accum = 0.0f;
 
                     // position in kernel
                     for(int cc = 0; cc < {KC}; cc++) {{
                         for(int hh = 0; hh < {KH}; hh++) {{
                             for(int ww = 0; ww < {KW}; ww++) {{
-                                const int ih = h + hh;
-                                const int iw = w + ww;
+                                const int ih = {-pads_start[0]} + (h * {self.strides[0]}) + hh;
+                                const int iw = {-pads_start[1]} + (w * {self.strides[1]}) + ww;
                                 if(ih >= 0 && ih < {H} && iw >= 0 && iw < {W}) {{
                                     accum += X[
                                         cc * {input_strides[1]} +
@@ -87,8 +87,8 @@ class ConvC(Conv):
 
                     Y[
                         f * {output_strides[1]} +
-                        (h + {pads_start[0]}) * {output_strides[2]} +
-                        (w + {pads_start[1]}) * {output_strides[3]}
+                        h * {output_strides[2]} +
+                        w * {output_strides[3]}
                     ] = accum;
                 }}
             }}
