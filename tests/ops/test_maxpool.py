@@ -4,12 +4,15 @@ import tensorflow as tf
 from ..util import check_keras
 
 
-@pytest.mark.parametrize("shape", [
-    # 1D
-    *[shape for shape in [[1, 1], [5, 1], [10, 2], [16, 3]]],
-    # 2D
-    *[shape for shape in [[1, 1, 1], [5, 5, 1], [10, 8, 3], [16, 8, 8]]]
-])
+@pytest.mark.parametrize(
+    "shape",
+    [
+        # 1D
+        *[shape for shape in [[1, 1], [5, 1], [10, 2], [16, 3]]],
+        # 2D
+        *[shape for shape in [[1, 1, 1], [5, 5, 1], [10, 8, 3], [16, 8, 8]]],
+    ],
+)
 @pytest.mark.parametrize("pool_size", [1, 3])
 @pytest.mark.parametrize("strides", [1, 3])
 @pytest.mark.parametrize("padding", ["valid", "same"])
