@@ -5,9 +5,9 @@ from .operation import OpCall, Operation, OpImpl
 
 class MaxPool(Operation):
     """
-    GEneral Matrix Multiplication operator
+    MaxPool operator
 
-    https://github.com/onnx/onnx/blob/main/docs/Operators.md#gemm
+    https://github.com/onnx/onnx/blob/main/docs/Operators.md#MaxPool
     """
 
     node_types = {"MaxPool"}
@@ -37,6 +37,6 @@ class MaxPool(Operation):
 @MaxPool.variant("c")
 class MaxPoolC(MaxPool):
     def impl(self) -> OpImpl:
-        source = ""
+        source = "Y[0] = X[0];"
 
         return OpImpl(lang="c", source=source)
