@@ -54,12 +54,10 @@ class Generator:
         :param name_to: Name of the destination tensor
         :raises KeyError: If the tensor names are not found
         """
-        if self.tensors[name_to].tag == "output":
-            self.weld_tensors(name_to, name_from)
-            return
-
         self.tensors[name_to].variable = self.tensors[name_from].variable
-        self.tensors[name_to].tag = "welded"
+
+        if self.tensors[name_to].tag != "output":
+            self.tensors[name_to].tag = "welded"
 
     def generate(self) -> ModelResult:
         """
@@ -152,6 +150,18 @@ class Generator:
                 offsets[tensor.tag] += tensor.size
 
             elif tensor.tag == "intermediate":
+                # IF an intermediate tensor is welded with the output
+                # we want to preserve the output tensor instead of the intermediate one
+                # so we skip the definition of the intermediate in favor of the output
+                skip = False
+                for other in self.tensors.values():
+                    if other.tag == "output" and other.variable == tensor.variable:
+                        # already defined as output
+                        skip = True
+                        break
+                if skip:
+                    continue
+
                 decl = f"float {tensor.variable}[{tensor.size}];"
             else:
                 # welded
