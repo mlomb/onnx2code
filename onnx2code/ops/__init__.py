@@ -1,3 +1,12 @@
 # flake8: noqa
 
-from . import broadcastable, elementwise, gemm, identity, maxpool, operation, transpose
+from . import (
+    broadcastable,
+    conv,
+    elementwise,
+    gemm,
+    identity,
+    maxpool,
+    operation,
+    transpose,
+)
