@@ -41,7 +41,6 @@ class MaxPoolC(MaxPool):
     def impl(self) -> OpImpl:
         KH, KW = self.KH, self.KW
 
-        C = self.X.shape[1]
         H = self.X.shape[2]
         W = self.X.shape[3]
 
