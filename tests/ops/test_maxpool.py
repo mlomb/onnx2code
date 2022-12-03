@@ -5,8 +5,8 @@ from ..util import check_keras
 
 
 @pytest.mark.parametrize("shape", [[1, 1], [5, 1], [10, 1], [16, 1]])
-@pytest.mark.parametrize("pool_size", [1, 2])
-@pytest.mark.parametrize("strides", [1, 2])
+@pytest.mark.parametrize("pool_size", [1, 3])
+@pytest.mark.parametrize("strides", [1, 3])
 @pytest.mark.parametrize("padding", ["valid", "same"])
 def test_maxpool_1D(
     shape: list[int],
