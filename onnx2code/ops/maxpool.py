@@ -29,7 +29,7 @@ class MaxPool(Operation):
 
     def call(self) -> OpCall:
         return OpCall(
-            name=f"MaxPool_{0}",
+            name=f"MaxPool_{self.KH}x{self.KW}",
             params=["X", "Y"],
             inputs=self.inputs,
             outputs=self.outputs,

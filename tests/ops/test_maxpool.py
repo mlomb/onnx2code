@@ -13,8 +13,8 @@ from ..util import check_keras
         *[shape for shape in [[1, 1, 1], [5, 5, 1], [10, 8, 3], [16, 8, 8]]],
     ],
 )
-@pytest.mark.parametrize("pool_size", [1, 3])
-@pytest.mark.parametrize("strides", [1, 3])
+@pytest.mark.parametrize("pool_size", [1, 2, 3])
+@pytest.mark.parametrize("strides", [1, 2, 3])
 @pytest.mark.parametrize("padding", ["valid", "same"])
 def test_maxpool(
     shape: list[int],
