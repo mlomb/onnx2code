@@ -31,7 +31,7 @@ from ..util import check_keras
     ],
     ids=lambda x: f"s{x[0]}d{x[1]}",
 )
-@pytest.mark.parametrize("use_bias", [False], ids=["no_bias"])
+@pytest.mark.parametrize("use_bias", [False, True], ids=["no_bias", "bias"])
 def test_conv(
     shape: list[int],
     kernel_size: int,
