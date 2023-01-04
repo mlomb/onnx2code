@@ -15,11 +15,14 @@ class Conv(Operation):
     node_types = {"Conv"}
 
     def parse(self) -> None:
-        assert len(self.inputs) == 2, "expected two inputs"
+        assert (
+            len(self.inputs) == 2 or len(self.inputs) == 3
+        ), "expected two or three inputs"
         assert len(self.outputs) == 1, "expected one output"
 
         self.X = self.inputs[0]
         self.W = self.inputs[1]
+        self.B = self.inputs[2] if len(self.inputs) == 3 else None
         self.Y = self.outputs[0]
 
         self.pads = get_attribute(self.node, "pads", [0] * len(self.X.shape) * 2)
@@ -28,7 +31,7 @@ class Conv(Operation):
     def call(self) -> OpCall:
         return OpCall(
             name=f"Conv_{self.X.shape_str()}_{self.W.shape_str()}",
-            params=["X", "W", "Y"],
+            params=["X", "W", "B", "Y"] if self.B is not None else ["X", "W", "Y"],
             inputs=self.inputs,
             outputs=self.outputs,
         )
@@ -61,7 +64,7 @@ class ConvC(Conv):
             // start position of kernel
             for(int h = 0; h < {self.Y.shape[2]}; h++) {{
                 for(int w = 0; w < {self.Y.shape[3]}; w++) {{
-                    float accum = 0.0f;
+                    float accum = {"0.0f" if self.B is None else "B[f]" };
 
                     // position in kernel
                     for(int cc = 0; cc < {KC}; cc++) {{
