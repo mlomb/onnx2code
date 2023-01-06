@@ -173,9 +173,9 @@ class Generator:
             else:
                 # welded
                 continue
-            
+
             decl = f"\n{decl : <34} // ({shape_str(tensor.shape)}) {tensor.name}"
-            
+
             if tensor.tag == "intermediate":
                 intermediate_tensors += decl
             else:
