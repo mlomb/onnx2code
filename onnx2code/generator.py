@@ -80,6 +80,12 @@ class Generator:
 
                 continue
 
+            if node.op_type in ["BatchNormalization"]:
+                """
+                No operation
+                """
+                continue
+
             op = Operation.get(node.op_type, self.variations)(
                 node,
                 [self.tensors[name] for name in node.input],
