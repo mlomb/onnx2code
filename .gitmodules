@@ -1,3 +1,0 @@
-[submodule "data/models"]
-	path = data/models
-	url = https://github.com/onnx/models
