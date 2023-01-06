@@ -136,6 +136,7 @@ class Generator:
                 source += indent(impl.full_source().strip(), prefix=" " * 4)
                 source += "\n}"
 
+        intermediate_tensors = ""
         inference_source = ""
         offsets: defaultdict[str, int] = defaultdict(int)
         # build tensor variables
@@ -172,10 +173,13 @@ class Generator:
             else:
                 # welded
                 continue
-
-            inference_source += (
-                f"\n{decl : <34} // ({shape_str(tensor.shape)}) {tensor.name}"
-            )
+            
+            decl = f"\n{decl : <34} // ({shape_str(tensor.shape)}) {tensor.name}"
+            
+            if tensor.tag == "intermediate":
+                intermediate_tensors += decl
+            else:
+                inference_source += decl
 
         # make op calls
         inference_source += "\n"
@@ -183,6 +187,7 @@ class Generator:
             inference_source += f"\n{call.invocation()};"
 
         source += "\n" * 2
+        source += intermediate_tensors + "\n" * 2
         source += INFERENCE_SIGNATURE + " {"
         source += indent(inference_source, prefix=" " * 4)
         source += "\n}"
