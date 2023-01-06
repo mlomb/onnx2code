@@ -43,12 +43,8 @@ def check_model(
 
             if not correct and os.getenv("ONNX2CODE_DEBUG", "0") == "1":
                 temp_dir = Path(__file__).parent.parent / "tmp/"
-                inputs_np = np.concatenate(
-                    [inp.reshape(-1) for inp in inputs.values()]
-                )
-                outputs_np = np.concatenate(
-                    [o.reshape(-1) for o in out2]
-                )
+                inputs_np = np.concatenate([inp.reshape(-1) for inp in inputs.values()])
+                outputs_np = np.concatenate([o.reshape(-1) for o in out2])
                 inputs_np.tofile(temp_dir / "sample_inputs.bin")
                 outputs_np.tofile(temp_dir / "sample_outputs.bin")
                 shutil.copyfile(
