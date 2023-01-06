@@ -8,7 +8,14 @@ from onnx2code.checker import check_model
 
 
 @pytest.mark.parametrize("variation", ["c"])
-# @pytest.mark.skip(reason="Not all ops are implemented")
-def test_mnist(variation: str) -> None:
-    model_proto = onnx.load(Path(os.path.dirname(__file__)) / "../../data/mnist-7.onnx")
+@pytest.mark.parametrize("size", [7, 8, 12])
+def test_mnist(variation: str, size: int) -> None:
+    model_proto = onnx.load(
+        Path(os.path.dirname(__file__))
+        / (
+            "../../data/models/vision/classification/mnist/model/mnist-"
+            + str(size)
+            + ".onnx"
+        )
+    )
     check_model(model_proto, [variation])

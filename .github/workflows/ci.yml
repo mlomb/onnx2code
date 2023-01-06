@@ -47,5 +47,8 @@ jobs:
       - name: Install dependencies
         run: pipenv install --dev
 
+      - name: Pull model zoo
+        run: make pull
+
       - name: Run tests
         run: pipenv run python -m pytest --no-header -v -W ignore::DeprecationWarning

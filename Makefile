@@ -15,3 +15,6 @@ format:
 	black --verbose .
 
 precommit: lint format test
+
+pull:
+	git -C data/models lfs pull --include="mnist"  --exclude=""
