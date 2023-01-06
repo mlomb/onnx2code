@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 import numpy as np
 import onnx
@@ -86,6 +86,63 @@ def compute_strides(shape: list[int]) -> list[int]:
         else:
             strides.append(int(np.prod(after)))
     return strides
+
+
+def resolve_stride(node: onnx.NodeProto) -> list[int]:
+    strides: list[int] = get_attribute(node, "strides", [1] * 2)
+    return strides
+
+
+def compute_pad(
+    in_dim: int,
+    stride: int,
+    kernel: int,
+    pad_type: Literal[b"SAME_UPPER", b"SAME_LOWER", b"VALID", b"NOTSET"],
+) -> tuple[int, int]:
+    """
+    https://github.com/microsoft/onnxruntime/blob/9ec1ed42a809170b87474f5822c4557101812399/onnxruntime/core/providers/common.h#L73
+    """
+    pad_head = 0
+    pad_tail = 0
+
+    if pad_type == b"VALID" or pad_type == b"NOTSET":
+        pass
+    elif pad_type == b"SAME_UPPER" or pad_type == b"SAME_LOWER":
+        legacy_target_size = (in_dim + stride - 1) // stride
+        pad_needed = (legacy_target_size - 1) * stride + kernel - in_dim
+
+        if pad_type == b"SAME_LOWER":
+            pad_head = (pad_needed + 1) // 2
+        else:
+            pad_head = pad_needed // 2
+
+        pad_tail = pad_needed - pad_head
+    else:
+        raise NotImplementedError(f"Pad type {pad_type} not implemented")
+
+    return pad_head, pad_tail
+
+
+def resolve_padding(node: onnx.NodeProto, X: TensorShape, W: TensorShape) -> list[int]:
+    """
+    Resolve padding attribute from node
+    """
+    ndims = len(X) - 2  # number of spatial dimensions (excluding batch and channel)
+    pads: list[int] = get_attribute(node, "pads", None)
+    auto_pad = get_attribute(node, "auto_pad", b"NOTSET")
+    stride = resolve_stride(node)
+
+    if pads is not None:
+        assert auto_pad == b"NOTSET", "Cannot specify both pads and auto_pad"
+        return pads
+
+    pads = [0] * ndims * 2
+    for i in range(ndims):
+        pad_head, pad_tail = compute_pad(X[i + 2], stride[i], W[i + 2], auto_pad)
+        pads[i] = pad_head
+        pads[i + ndims] = pad_tail
+
+    return pads
 
 
 def shape_str(shape: list[int], sep: str = "x") -> str:

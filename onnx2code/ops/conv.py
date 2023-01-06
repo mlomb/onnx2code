@@ -1,4 +1,8 @@
-from onnx2code.util import compute_strides, get_attribute
+from onnx2code.util import (
+    compute_strides,
+    resolve_padding,
+    resolve_stride,
+)
 
 from .operation import OpCall, Operation, OpImpl
 
@@ -25,10 +29,8 @@ class Conv(Operation):
         self.B = self.inputs[2] if len(self.inputs) == 3 else None
         self.Y = self.outputs[0]
 
-        self.pads = get_attribute(self.node, "pads", [0] * len(self.X.shape) * 2)
-        self.strides = get_attribute(self.node, "strides", [1] * 2)
-
-        # TODO: read auto_pad and set pads accordingly
+        self.strides = resolve_stride(self.node)
+        self.pads = resolve_padding(self.node, self.X.shape, self.W.shape)
 
     def call(self) -> OpCall:
         return OpCall(
