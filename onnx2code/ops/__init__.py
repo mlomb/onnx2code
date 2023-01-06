@@ -9,4 +9,5 @@ from . import (
     maxpool,
     operation,
     transpose,
+    softmax,
 )
