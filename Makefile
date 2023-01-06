@@ -17,4 +17,4 @@ format:
 precommit: lint format test
 
 pull:
-	git -C models lfs pull --include="mnist"  --exclude=""
+	git -C models lfs pull -I="mnist*,super-resolution*" --exclude=""
