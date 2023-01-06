@@ -28,6 +28,8 @@ class Conv(Operation):
         self.pads = get_attribute(self.node, "pads", [0] * len(self.X.shape) * 2)
         self.strides = get_attribute(self.node, "strides", [1] * 2)
 
+        # TODO: read auto_pad and set pads accordingly
+
     def call(self) -> OpCall:
         return OpCall(
             name=f"Conv_{self.X.shape_str()}_{self.W.shape_str()}",
