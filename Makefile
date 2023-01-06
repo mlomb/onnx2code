@@ -17,4 +17,4 @@ format:
 precommit: lint format test
 
 pull:
-	git -C data/models lfs pull --include="mnist"  --exclude=""
+	git -C models lfs pull --include="mnist"  --exclude=""
