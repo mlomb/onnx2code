@@ -13,7 +13,7 @@ def test_mnist(variation: str, size: int) -> None:
     model_proto = onnx.load(
         Path(os.path.dirname(__file__))
         / (
-            "../../data/models/vision/classification/mnist/model/mnist-"
+            "../../models/vision/classification/mnist/model/mnist-"
             + str(size)
             + ".onnx"
         )
