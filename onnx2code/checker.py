@@ -35,19 +35,25 @@ def check_model(
             out2 = ort_sess.run(None, inputs)
 
             assert len(out1) == len(out2)
+
+            correct = True
+
             for o1, o2 in zip(out1, out2):
-                correct = np.allclose(o1, o2)
+                correct = correct and np.allclose(o1, o2, atol=1e-5)
 
-                if not correct and os.getenv("ONNX2CODE_DEBUG", "0") == "1":
-                    temp_dir = Path(__file__).parent.parent / "tmp/"
-                    inputs_np = np.concatenate(
-                        [inp.reshape(-1) for inp in inputs.values()]
-                    )
-                    inputs_np.tofile(temp_dir / "sample_inputs.bin")
-                    o2.reshape(-1).tofile(temp_dir / "sample_outputs.bin")
-                    shutil.copyfile(
-                        Path(__file__).parent / "debugger.c",
-                        temp_dir / "debugger.c",
-                    )
+            if not correct and os.getenv("ONNX2CODE_DEBUG", "0") == "1":
+                temp_dir = Path(__file__).parent.parent / "tmp/"
+                inputs_np = np.concatenate(
+                    [inp.reshape(-1) for inp in inputs.values()]
+                )
+                outputs_np = np.concatenate(
+                    [o.reshape(-1) for o in out2]
+                )
+                inputs_np.tofile(temp_dir / "sample_inputs.bin")
+                outputs_np.tofile(temp_dir / "sample_outputs.bin")
+                shutil.copyfile(
+                    Path(__file__).parent / "debugger.c",
+                    temp_dir / "debugger.c",
+                )
 
-                assert np.allclose(o1, o2, atol=1e-5), "output mismatch"
+            assert correct, "output mismatch"
