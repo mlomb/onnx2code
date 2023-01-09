@@ -66,15 +66,16 @@ class Generator:
         for node in self.model_proto.graph.node:
             if node.op_type in [
                 # Reshape/Squeeze/Unsqueeze operator ⚠️ SPECIAL CASE ⚠️
-                # 
+                #
                 # https://github.com/onnx/onnx/blob/main/docs/Operators.md#reshape
                 # https://github.com/onnx/onnx/blob/main/docs/Operators.md#squeeze
                 # https://github.com/onnx/onnx/blob/main/docs/Operators.md#unsqueeze
-                "Reshape", "Squeeze", "Unsqueeze",
-                
+                "Reshape",
+                "Squeeze",
+                "Unsqueeze",
                 # have no effect during inference
                 "Dropout",
-                "BatchNormalization" # are we sure about this one?
+                "BatchNormalization",  # are we sure about this one?
             ]:
                 assert len(node.output) == 1, "expected one output"
 

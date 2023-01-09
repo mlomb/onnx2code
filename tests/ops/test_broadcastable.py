@@ -41,6 +41,7 @@ def test_basic_ops(
     model = tf.keras.Model(inputs=[inputA, inputB], outputs=[result])
     check_keras(model)
 
+
 @pytest.mark.parametrize("shapeA,shapeB", shapes)
 def test_div(shapeA: list[int], shapeB: list[int]) -> None:
     inputA = tf.keras.Input(shapeA)
