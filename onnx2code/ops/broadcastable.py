@@ -12,7 +12,7 @@ class Broadcastable(Operation):
     https://github.com/onnx/onnx/blob/master/docs/Broadcasting.md
     """
 
-    node_types = {"Add", "Sub", "Mul"}
+    node_types = {"Add", "Div", "Mul", "Sub"}
 
     def parse(self) -> None:
         assert len(self.inputs) == 2, "expected two inputs"
@@ -39,8 +39,9 @@ class BroadcastableC(Broadcastable):
 
         symbol = {
             "Add": "+",
-            "Sub": "-",
+            "Div": "/",
             "Mul": "*",
+            "Sub": "-",
         }[self.op]
 
         if self.b_is_scalar:
