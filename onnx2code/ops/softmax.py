@@ -1,4 +1,5 @@
 from typing import Callable
+
 from onnx2code.util import compute_strides, get_attribute
 
 from .operation import OpCall, Operation, OpImpl

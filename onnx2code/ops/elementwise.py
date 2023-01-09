@@ -1,36 +1,7 @@
 import numpy as np
 
-from ..util import get_attribute
+from ..util import LETTERS, get_attribute
 from .operation import OpCall, Operation, OpImpl
-
-LETTERS = [
-    "A",
-    "B",
-    "C",
-    "D",
-    "E",
-    "F",
-    "G",
-    "H",
-    "I",
-    "J",
-    "K",
-    "L",
-    "M",
-    "N",
-    "O",
-    "P",
-    "Q",
-    "R",
-    "S",
-    "T",
-    "U",
-    "V",
-    "W",
-    "X",
-    "Y",
-    "Z",
-]
 
 
 class Elementwise(Operation):

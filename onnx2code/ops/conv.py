@@ -1,8 +1,4 @@
-from onnx2code.util import (
-    compute_strides,
-    resolve_padding,
-    resolve_stride,
-)
+from onnx2code.util import compute_strides, resolve_padding, resolve_stride
 
 from .operation import OpCall, Operation, OpImpl
 

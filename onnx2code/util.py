@@ -152,3 +152,34 @@ def shape_str(shape: list[int], sep: str = "x") -> str:
     For example, shape_str([1, 2, 3], "x") returns "1x2x3"
     """
     return sep.join(map(str, shape))
+
+
+# used as tensor names
+LETTERS = [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "J",
+    "K",
+    "L",
+    "M",
+    "N",
+    "O",
+    "P",
+    "Q",
+    "R",
+    "S",
+    "T",
+    "U",
+    "V",
+    "W",
+    "X",
+    "Y",
+    "Z",
+]

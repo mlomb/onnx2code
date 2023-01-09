@@ -1,13 +1,4 @@
 # flake8: noqa
 
-from . import (
-    broadcastable,
-    conv,
-    elementwise,
-    gemm,
-    identity,
-    operation,
-    pooling,
-    transpose,
-    softmax,
-)
+from . import (broadcastable, concat, conv, elementwise, gemm, identity,
+               operation, pooling, softmax, transpose)
