@@ -64,26 +64,24 @@ class Generator:
         Generate C and ASM code to run the model
         """
         for node in self.model_proto.graph.node:
-            if node.op_type in ["Reshape", "Squeeze", "Unsqueeze"]:
-                """
-                Reshape/Squeeze/Unsqueeze operator ⚠️ SPECIAL CASE ⚠️
-
-                https://github.com/onnx/onnx/blob/main/docs/Operators.md#reshape
-                https://github.com/onnx/onnx/blob/main/docs/Operators.md#squeeze
-                https://github.com/onnx/onnx/blob/main/docs/Operators.md#unsqueeze
-                """
+            if node.op_type in [
+                # Reshape/Squeeze/Unsqueeze operator ⚠️ SPECIAL CASE ⚠️
+                # 
+                # https://github.com/onnx/onnx/blob/main/docs/Operators.md#reshape
+                # https://github.com/onnx/onnx/blob/main/docs/Operators.md#squeeze
+                # https://github.com/onnx/onnx/blob/main/docs/Operators.md#unsqueeze
+                "Reshape", "Squeeze", "Unsqueeze",
+                
+                # have no effect during inference
+                "Dropout",
+                "BatchNormalization" # are we sure about this one?
+            ]:
                 assert len(node.output) == 1, "expected one output"
 
                 # Since it just reshapes the tensor, we don't need to do anything in runtime
                 # But we must must be weld the input and output tensors (variables/data)
                 self.weld_tensors(node.input[0], node.output[0])
 
-                continue
-
-            if node.op_type in ["BatchNormalization"]:
-                """
-                No operation
-                """
                 continue
 
             op = Operation.get(node.op_type, self.variations)(
