@@ -1,4 +1,5 @@
-from onnx2code.util import get_attribute
+from typing import Callable
+from onnx2code.util import compute_strides, get_attribute
 
 from .operation import OpCall, Operation, OpImpl
 
@@ -19,11 +20,15 @@ class Softmax(Operation):
         self.X = self.inputs[0]
         self.Y = self.outputs[0]
 
-        self.axis = get_attribute(self.node, "axis", 1)
+        self.strides = compute_strides(self.X.shape)
+        self.sizes = self.X.shape.copy()
+        self.axis = get_attribute(self.node, "axis", -1)
+        if self.axis < 0:
+            self.axis += len(self.X.shape)
 
     def call(self) -> OpCall:
         return OpCall(
-            name=f"Softmax_{self.axis}",
+            name=f"Softmax",
             params=["X", "Y"],
             inputs=self.inputs,
             outputs=self.outputs,
@@ -33,20 +38,46 @@ class Softmax(Operation):
 @Softmax.variant("c")
 class SoftmaxC(Softmax):
     def impl(self) -> OpImpl:
-        axis = self.axis
-        if axis < 0:
-            axis += len(self.X.shape)
+        strides, sizes, axis = self.strides, self.sizes, self.axis
 
-        source = f"""
-        for(int x = 0; x < {self.X.shape[axis]}; x++) {{
-            float sum = 0;
-            for(int y = 0; y < {self.Y.shape[axis]}; y++) {{
-                sum += exp(X[x * {self.X.shape[axis]} + y]);
+        labels_size = sizes[axis]
+        labels_stride = strides[axis]
+
+        del sizes[axis]
+        del strides[axis]
+
+        NL = "\n"
+
+        def in_pepe(predicate: Callable[[str], str]) -> str:
+            iterators = []
+            offset = f"i * {labels_stride}"
+
+            for i, size in enumerate(sizes):
+                iterators.append(f"for (int d{i} = 0; d{i} < {size}; ++d{i}) {{")
+                offset += f" + d{i} * {strides[i]}"
+
+            return f"""
+                {NL.join(iterators)}
+                {predicate(offset)}
+                {NL.join("}" for _ in iterators)}
+            """
+
+        source = in_pepe(
+            lambda offset: f"""
+            float max = -INFINITY;
+            float sum = 0.0f;
+
+            for (int i = 0; i < {labels_size}; ++i) {{
+                max = fmax(max, X[{offset}]);
             }}
-            for(int y = 0; y < {self.X.shape[axis]}; y++) {{
-                Y[x * {self.X.shape[axis]} + y] = exp(X[x * {self.X.shape[axis]} + y]) / sum;
+            for (int i = 0; i < {labels_size}; ++i) {{
+                Y[{offset}] = exp(X[{offset}] - max);
+                sum += Y[{offset}];
             }}
-        }}
+            for (int i = 0; i < {labels_size}; ++i) {{
+                Y[{offset}] /= sum;
+            }}
         """
+        )
 
         return OpImpl(lang="c", source=source)
