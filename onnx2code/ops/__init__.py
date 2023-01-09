@@ -6,8 +6,8 @@ from . import (
     elementwise,
     gemm,
     identity,
-    maxpool,
     operation,
+    pooling,
     transpose,
     softmax,
 )

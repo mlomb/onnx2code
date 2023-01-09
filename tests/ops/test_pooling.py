@@ -16,16 +16,24 @@ from ..util import check_keras
 @pytest.mark.parametrize("pool_size", [1, 2, 3])
 @pytest.mark.parametrize("strides", [1, 2, 3])
 @pytest.mark.parametrize("padding", ["valid", "same"])
+@pytest.mark.parametrize("op", ["max", "average"])
 def test_maxpool(
     shape: list[int],
     pool_size: int,
     strides: int,
     padding: str,
+    op: str,
 ) -> None:
     impl = {
-        2: tf.keras.layers.MaxPooling1D,
-        3: tf.keras.layers.MaxPooling2D,
-    }[len(shape)]
+        "max": {
+            2: tf.keras.layers.MaxPooling1D,
+            3: tf.keras.layers.MaxPooling2D,
+        },
+        "average": {
+            2: tf.keras.layers.AveragePooling1D,
+            3: tf.keras.layers.AveragePooling2D,
+        },
+    }[op][len(shape)]
     input = tf.keras.Input(shape)
     try:
         pool = impl(

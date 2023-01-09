@@ -3,19 +3,24 @@ from onnx2code.util import compute_strides, get_attribute
 from .operation import OpCall, Operation, OpImpl
 
 
-class MaxPool(Operation):
+class Pooling(Operation):
     """
-    MaxPool operator
+    MaxPool, AveragePool operators
 
     https://github.com/onnx/onnx/blob/main/docs/Operators.md#MaxPool
+    https://github.com/onnx/onnx/blob/main/docs/Operators.md#AveragePool
     """
 
-    node_types = {"MaxPool"}
+    node_types = {"MaxPool", "AveragePool"}
 
     def parse(self) -> None:
         assert len(self.inputs) == 1, "expected one input"
         assert len(self.outputs) == 1, "expected one output"
 
+        count_include_pad = get_attribute(self.node, "count_include_pad", 0)
+        assert count_include_pad == 0, "only support count_include_pad=0"
+
+        self.op: str = self.node.op_type
         self.X = self.inputs[0]
         self.Y = self.outputs[0]
 
@@ -29,7 +34,7 @@ class MaxPool(Operation):
 
     def call(self) -> OpCall:
         return OpCall(
-            name="MaxPool",
+            name=self.op,
             sig_params=[self.X.shape, [self.KW, self.KH], self.strides, self.pads],
             params=["X", "Y"],
             inputs=self.inputs,
@@ -37,8 +42,8 @@ class MaxPool(Operation):
         )
 
 
-@MaxPool.variant("c")
-class MaxPoolC(MaxPool):
+@Pooling.variant("c")
+class PoolingC(Pooling):
     def impl(self) -> OpImpl:
         KH, KW = self.KH, self.KW
 
@@ -56,7 +61,9 @@ class MaxPoolC(MaxPool):
         for(int c = 0; c < {self.Y.shape[1]}; c++) {{
             for(int h = 0; h < {self.Y.shape[2]}; h++) {{
                 for(int w = 0; w < {self.Y.shape[3]}; w++) {{
-                    float mmax = -INFINITY;
+                    float acc = {'-INFINITY' if self.op == "MaxPool" else "0.0f"};
+                    int count = 0;
+                    
                     // position in kernel
                     for(int hh = 0; hh < {KH}; hh++) {{
                         for(int ww = 0; ww < {KW}; ww++) {{
@@ -68,7 +75,8 @@ class MaxPoolC(MaxPool):
                                     ih * {input_strides[2]} +
                                     iw * {input_strides[3]}
                                 ];
-                                mmax = mmax > val ? mmax : val;
+                                acc = {'acc > val ? acc : val' if self.op == "MaxPool" else 'acc + val'};
+                                count++;
                             }}
                         }}
                     }}
@@ -76,7 +84,7 @@ class MaxPoolC(MaxPool):
                         c * {output_strides[1]} +
                         h * {output_strides[2]} +
                         w * {output_strides[3]}
-                    ] = mmax;
+                    ] = acc{"" if self.op == "MaxPool" else "/(float)count"};
                 }}
             }}
         }}
