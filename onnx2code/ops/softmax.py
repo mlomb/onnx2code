@@ -48,7 +48,7 @@ class SoftmaxC(Softmax):
 
         NL = "\n"
 
-        def in_pepe(predicate: Callable[[str], str]) -> str:
+        def iterate(predicate: Callable[[str], str]) -> str:
             iterators = []
             offset = f"i * {labels_stride}"
 
@@ -62,7 +62,7 @@ class SoftmaxC(Softmax):
                 {NL.join("}" for _ in iterators)}
             """
 
-        source = in_pepe(
+        source = iterate(
             lambda offset: f"""
             float max = -INFINITY;
             float sum = 0.0f;
