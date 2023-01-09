@@ -32,3 +32,7 @@ def test_mnist(variation: str, size: int) -> None:
 # @pytest.mark.parametrize("variation", ["c"])
 # def test_super_resolution(variation: str) -> None:
 #    check_zoo("vision", "super_resolution", "sub_pixel_cnn_2016", "super-resolution-10", variation)
+
+@pytest.mark.parametrize("size", [7, 8])
+def test_emotion_ferplus(size: int) -> None:
+    check_zoo("vision", "body_analysis", "emotion_ferplus", f"emotion-ferplus-{size}", "c")
