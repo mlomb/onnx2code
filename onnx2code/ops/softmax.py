@@ -28,7 +28,7 @@ class Softmax(Operation):
 
     def call(self) -> OpCall:
         return OpCall(
-            name=f"Softmax",
+            name="Softmax",
             sig_params=[],
             params=["X", "Y"],
             inputs=self.inputs,

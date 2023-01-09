@@ -63,7 +63,7 @@ class PoolingC(Pooling):
                 for(int w = 0; w < {self.Y.shape[3]}; w++) {{
                     float acc = {'-INFINITY' if self.op == "MaxPool" else "0.0f"};
                     int count = 0;
-                    
+
                     // position in kernel
                     for(int hh = 0; hh < {KH}; hh++) {{
                         for(int ww = 0; ww < {KW}; ww++) {{

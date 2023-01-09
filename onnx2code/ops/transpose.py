@@ -1,4 +1,4 @@
-from ..util import compute_strides, get_attribute, shape_str
+from ..util import compute_strides, get_attribute
 from .operation import OpCall, Operation, OpImpl
 
 
