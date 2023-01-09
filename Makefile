@@ -9,10 +9,10 @@ dev:
 
 lint:
 	flake8 . --count --statistics && \
-	isort .
+	isort . --skip=models
 
 format:
-	black --verbose .
+	black --verbose . --exclude=models
 
 precommit: lint format test
 
