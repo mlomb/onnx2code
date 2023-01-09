@@ -3,6 +3,35 @@ import numpy as np
 from ..util import get_attribute
 from .operation import OpCall, Operation, OpImpl
 
+LETTERS = [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "J",
+    "K",
+    "L",
+    "M",
+    "N",
+    "O",
+    "P",
+    "Q",
+    "R",
+    "S",
+    "T",
+    "U",
+    "V",
+    "W",
+    "X",
+    "Y",
+    "Z",
+]
+
 
 class Elementwise(Operation):
     """
@@ -11,14 +40,14 @@ class Elementwise(Operation):
     For example: ReLU, Tanh, Sigmoid, etc.
     """
 
-    node_types = {"Relu", "Tanh", "Sigmoid", "Clip"}
+    node_types = {"Relu", "Tanh", "Sigmoid", "Clip", "Sum"}
 
     def parse(self) -> None:
-        assert len(self.inputs) == 1, "expected one input"
         assert len(self.outputs) == 1, "expected one output"
-        assert (
-            self.inputs[0].size == self.outputs[0].size
-        ), "input and output tensors should have the same size"
+        for input in self.inputs:
+            assert (
+                input.size == self.outputs[0].size
+            ), "input and output tensors should have the same size"
 
         self.op: str = self.node.op_type
         self.size = self.inputs[0].size
@@ -26,7 +55,7 @@ class Elementwise(Operation):
     def call(self) -> OpCall:
         return OpCall(
             name=f"{self.op}_{self.size}",
-            params=["A", "B"],
+            params=LETTERS[: len(self.inputs)] + ["OUT"],
             inputs=self.inputs,
             outputs=self.outputs,
         )
@@ -37,6 +66,8 @@ class ElementwiseC(Elementwise):
     def impl(self) -> OpImpl:
         impl: str
         match self.op:
+            case "Sum":
+                impl = "+".join([f"{LETTERS[i]}[i]" for i in range(len(self.inputs))])
             case "Relu":
                 impl = "A[i] > 0 ? A[i] : 0"
             case "Tanh":
@@ -55,7 +86,7 @@ class ElementwiseC(Elementwise):
 
         source = f"""
         for(int i = 0; i < {self.size}; i++) {{
-            B[i] = {impl};
+            OUT[i] = {impl};
         }}
         """
 
