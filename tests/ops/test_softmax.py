@@ -14,7 +14,7 @@ def test_softmax(shape: list[int], axis: int) -> None:
     try:
         output = tf.keras.layers.Softmax(axis=axis)(input)
         model = tf.keras.Model(inputs=[input], outputs=[output])
-    except:
+    except Exception:
         pytest.skip("incompatible configuration")
 
     check_keras(model)

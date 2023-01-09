@@ -35,7 +35,8 @@ class GEMM(Operation):
 
     def call(self) -> OpCall:
         return OpCall(
-            name=f"GEMM_{'C' if self.hasC else ''}_{self.inputs[0].shape_str()}_{self.inputs[1].shape_str()}",
+            name="GEMM",
+            sig_params=[self.hasC, self.inputs[0].shape, self.inputs[1].shape],
             params=["A", "B"] + (["C"] if self.hasC else []) + ["Y"],
             inputs=self.inputs,
             outputs=self.outputs,

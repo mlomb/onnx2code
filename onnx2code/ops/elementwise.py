@@ -54,7 +54,8 @@ class Elementwise(Operation):
 
     def call(self) -> OpCall:
         return OpCall(
-            name=f"{self.op}_{self.size}",
+            name=self.op,
+            sig_params=[self.size],
             params=LETTERS[: len(self.inputs)] + ["OUT"],
             inputs=self.inputs,
             outputs=self.outputs,

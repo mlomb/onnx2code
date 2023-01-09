@@ -33,11 +33,9 @@ class Conv(Operation):
         self.pads = resolve_padding(self.node, self.X.shape, self.W.shape)
 
     def call(self) -> OpCall:
-        def list_str(arr: list[int]) -> str:
-            return "x".join(map(str, arr))
-
         return OpCall(
-            name=f"Conv_{self.X.shape_str()}_{self.W.shape_str()}_{list_str(self.strides)}_{list_str(self.pads)}",
+            name="Conv",
+            sig_params=[self.X.shape, self.W.shape, self.strides, self.pads],
             params=["X", "W", "B", "Y"] if self.B is not None else ["X", "W", "Y"],
             inputs=self.inputs,
             outputs=self.outputs,

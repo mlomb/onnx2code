@@ -25,7 +25,8 @@ class Broadcastable(Operation):
 
     def call(self) -> OpCall:
         return OpCall(
-            name=f"{self.op}_{self.inputs[0].shape_str()}_{self.outputs[0].shape_str()}",
+            name=self.op,
+            sig_params=[self.inputs[0].shape, self.outputs[0].shape],
             params=["A", "B", "C"],
             inputs=self.inputs,
             outputs=self.outputs,

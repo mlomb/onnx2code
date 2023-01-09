@@ -151,9 +151,4 @@ def shape_str(shape: list[int], sep: str = "x") -> str:
 
     For example, shape_str([1, 2, 3], "x") returns "1x2x3"
     """
-    size_str = ""
-    for dim in shape:
-        size_str += f"{int(dim)}{sep}"
-    if len(sep) > 0:
-        size_str = size_str[: -len(sep)]  # remove last {sep}
-    return size_str
+    return sep.join(map(str, shape))

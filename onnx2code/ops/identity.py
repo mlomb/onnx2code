@@ -21,7 +21,8 @@ class Identity(Operation):
 
     def call(self) -> OpCall:
         return OpCall(
-            name=f"Identity_{self.size}",
+            name="Identity",
+            sig_params=[self.size],
             params=["A", "B"],
             inputs=self.inputs,
             outputs=self.outputs,

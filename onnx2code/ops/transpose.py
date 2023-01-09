@@ -24,14 +24,8 @@ class Transpose(Operation):
 
     def call(self) -> OpCall:
         return OpCall(
-            name="_".join(
-                [
-                    "Transpose",
-                    shape_str(self.inputs[0].shape),
-                    shape_str(self.outputs[0].shape),
-                    shape_str(self.perm, sep=""),
-                ]
-            ),
+            name="Transpose",
+            sig_params=[self.inputs[0].shape, self.outputs[0].shape, self.perm],
             params=["A", "B"],
             inputs=self.inputs,
             outputs=self.outputs,

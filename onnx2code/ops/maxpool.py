@@ -28,11 +28,9 @@ class MaxPool(Operation):
         self.KW = kernel_shape[1]
 
     def call(self) -> OpCall:
-        def list_str(arr: list[int]) -> str:
-            return "x".join(map(str, arr))
-
         return OpCall(
-            name=f"MaxPool_{self.X.shape_str()}_{self.KH}x{self.KW}_{list_str(self.strides)}_{list_str(self.pads)}",
+            name="MaxPool",
+            sig_params=[self.X.shape, [self.KW, self.KH], self.strides, self.pads],
             params=["X", "Y"],
             inputs=self.inputs,
             outputs=self.outputs,

@@ -12,20 +12,35 @@ from ..tensor import TensorInfo
 @dataclass
 class OpCall:
     name: str
+    sig_params: list[int | str | list[int] | list[str]]
     params: list[str]
     inputs: list[TensorInfo]
     outputs: list[TensorInfo]
+
+    def fn_name(self) -> str:
+        str_sig_params = []
+        for sig_param in self.sig_params:
+            if isinstance(sig_param, list):
+                str_sig_params.append("x".join(map(str, sig_param)))
+            else:
+                str_sig_params.append(str(sig_param))
+
+        return f"{self.name}{'_' if len(str_sig_params) > 0 else ''}" + "_".join(
+            str_sig_params
+        )
 
     def signature(self) -> str:
         params = ", ".join(
             f"{'const ' if i < len(self.inputs) else ''}float* {name}"
             for i, name in enumerate(self.params)
         )
-        return f"void {self.name}({params})"
+
+        return f"void {self.fn_name()}({params})"
 
     def invocation(self) -> str:
         return (
-            self.name + f"({', '.join(t.variable for t in self.inputs + self.outputs)})"
+            self.fn_name()
+            + f"({', '.join(t.variable for t in self.inputs + self.outputs)})"
         )
 
 

@@ -204,8 +204,8 @@ class Generator:
                 source = "\n".join(
                     [
                         *[f";; {c}" for c in comments],
-                        f"global {call.name}",
-                        f"{call.name}:",
+                        f"global {call.fn_name()}",
+                        f"{call.fn_name()}:",
                         indent(impl.full_source(), prefix=" " * 4),
                     ]
                 )
