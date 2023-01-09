@@ -24,9 +24,9 @@ def check_zoo(
 
 
 @pytest.mark.parametrize("variation", ["c"])
-@pytest.mark.parametrize("size", [7, 8, 12])
-def test_mnist(variation: str, size: int) -> None:
-    check_zoo("vision", "classification", "mnist", f"mnist-{str(size)}", variation)
+@pytest.mark.parametrize("version", [7, 8, 12])
+def test_mnist(variation: str, version: int) -> None:
+    check_zoo("vision", "classification", "mnist", f"mnist-{str(version)}", variation)
 
 
 # @pytest.mark.parametrize("variation", ["c"])
@@ -34,8 +34,13 @@ def test_mnist(variation: str, size: int) -> None:
 #    check_zoo("vision", "super_resolution", "sub_pixel_cnn_2016", "super-resolution-10", variation)
 
 
-@pytest.mark.parametrize("size", [7, 8])
-def test_emotion_ferplus(size: int) -> None:
+@pytest.mark.parametrize("version", [7, 8])
+def test_emotion_ferplus(version: int) -> None:
     check_zoo(
-        "vision", "body_analysis", "emotion_ferplus", f"emotion-ferplus-{size}", "c"
+        "vision", "body_analysis", "emotion_ferplus", f"emotion-ferplus-{version}", "c"
     )
+
+
+@pytest.mark.parametrize("version", [7])
+def test_squeezenet(version: int) -> None:
+    check_zoo("vision", "classification", "squeezenet", f"squeezenet1.1-{version}", "c")
