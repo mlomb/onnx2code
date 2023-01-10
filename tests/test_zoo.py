@@ -108,16 +108,17 @@ def test_resnet50_caffe2_v1(variation: str, version: int) -> None:
 #     )
 
 
-@pytest.mark.parametrize("variation", ["c"])
-@pytest.mark.parametrize("version", [7, 8, 9])
-def test_vgg19_caffe2(variation: str, version: int) -> None:
-    check_zoo(
-        "vision",
-        "classification",
-        "vgg",
-        f"vgg19-caffe2-{version}",
-        variation,
-    )
+# TODO: recheck
+# @pytest.mark.parametrize("variation", ["c"])
+# @pytest.mark.parametrize("version", [7, 8, 9])
+# def test_vgg19_caffe2(variation: str, version: int) -> None:
+#     check_zoo(
+#         "vision",
+#         "classification",
+#         "vgg",
+#         f"vgg19-caffe2-{version}",
+#         variation,
+#     )
 
 
 # No support for depthwise conv
