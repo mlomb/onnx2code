@@ -64,7 +64,7 @@ class GEMMC(GEMM):
     def impl(self) -> OpImpl:
         N, M, K = self.N, self.M, self.K
 
-        index_B = f"i * {K} + col" if self.transB == False else f"col * {M} + i"
+        index_B = f"i * {K} + col" if not self.transB else f"col * {M} + i"
 
         source = f"""
         for(int row = 0; row < {N}; row++) {{
