@@ -1,8 +1,8 @@
 import json
 import os
-from typing import Any
 import urllib.request
 from pathlib import Path
+from typing import Any
 
 
 def download_from_zoo(path: str, expected_size: int | None = None) -> Path:

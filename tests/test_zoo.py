@@ -27,7 +27,7 @@ def test_zoo(model: Any, variation: str) -> None:
         pytest.skip("Opset version < 7")
 
     # avoid downloading big models!
-    # try to early out if IO is incompatible 
+    # try to early out if IO is incompatible
     try:
         check_io_is_float(model)
     except NotImplementedError as e:
