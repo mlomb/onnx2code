@@ -1,4 +1,9 @@
-from onnx2code.util import compute_strides, resolve_padding, resolve_stride
+from onnx2code.util import (
+    compute_strides,
+    get_attribute,
+    resolve_padding,
+    resolve_stride,
+)
 
 from .operation import OpCall, Operation, OpImpl
 
@@ -19,6 +24,9 @@ class Conv(Operation):
             len(self.inputs) == 2 or len(self.inputs) == 3
         ), "expected two or three inputs"
         assert len(self.outputs) == 1, "expected one output"
+
+        group = get_attribute(self.node, "group", 1)
+        assert group == 1, "depthwise is not supported (only group=1)"
 
         self.X = self.inputs[0]
         self.W = self.inputs[1]
