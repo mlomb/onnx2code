@@ -84,8 +84,6 @@ class Generator:
                 # other kind of reshape
                 "Flatten",
             ]:
-                assert len(node.output) == 1, "expected one output"
-
                 # Since it just reshapes the tensor, we don't need to do anything in runtime
                 # But we must must be weld the input and output tensors (variables/data)
                 self.weld_tensors(node.input[0], node.output[0])
