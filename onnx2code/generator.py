@@ -76,6 +76,8 @@ class Generator:
                 # have no effect during inference
                 "Dropout",
                 "BatchNormalization",  # are we sure about this one?
+                # other kind of reshape
+                "Flatten",
             ]:
                 assert len(node.output) == 1, "expected one output"
 
@@ -94,6 +96,13 @@ class Generator:
             call = op.call()
 
             if call is not None and impl is not None:
+                if impl in self.impls:
+                    new_name = call.fn_name()
+                    prev_name = self.impls[impl].fn_name()
+                    assert (
+                        new_name == prev_name
+                    ), "function name should coincide if the implementation is the same"
+
                 self.impls[impl] = call
                 self.calls.append(call)
 
