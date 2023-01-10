@@ -18,7 +18,8 @@ class Pooling(Operation):
         assert len(self.outputs) == 1, "expected one output"
 
         count_include_pad = get_attribute(self.node, "count_include_pad", 0)
-        assert count_include_pad == 0, "only support count_include_pad=0"
+        if count_include_pad != 0:
+            raise NotImplementedError("only support count_include_pad=0")
 
         self.op: str = self.node.op_type
         self.X = self.inputs[0]

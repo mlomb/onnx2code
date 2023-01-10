@@ -26,7 +26,8 @@ class Conv(Operation):
         assert len(self.outputs) == 1, "expected one output"
 
         group = get_attribute(self.node, "group", 1)
-        assert group == 1, "depthwise is not supported (only group=1)"
+        if group != 1:
+            raise NotImplementedError("depthwise is not supported (group != 1)")
 
         self.X = self.inputs[0]
         self.W = self.inputs[1]

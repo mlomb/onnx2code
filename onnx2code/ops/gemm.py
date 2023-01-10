@@ -28,9 +28,12 @@ class GEMM(Operation):
         self.alpha = None if self.alpha == 1.0 else self.alpha
         self.beta = None if self.beta == 1.0 else self.beta
 
-        assert not self.transA, "transA not supported"
-        assert self.alpha is None, "alpha not supported"
-        assert self.beta is None, "beta not supported"
+        if self.transA:
+            raise NotImplementedError("transA not supported")
+        if self.alpha is not None:
+            raise NotImplementedError("alpha not supported")
+        if self.beta is not None:
+            raise NotImplementedError("beta not supported")
 
         A = self.inputs[0]
         B = self.inputs[1]
