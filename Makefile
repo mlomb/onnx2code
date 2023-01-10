@@ -15,7 +15,3 @@ format:
 	black --verbose . --exclude=models
 
 precommit: lint format test
-
-pull:
-	git clone https://github.com/onnx/models.git models && \
-	git -C models lfs pull -I="mnist*,super-resolution*,emotion-ferplus*,squeezenet*,shufflenet*,resnet50*,ResNet101-DUC*,vgg19-caffe2*,efficientnet-lite4*,vgg16*" --exclude=""
