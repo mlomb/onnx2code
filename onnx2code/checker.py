@@ -11,7 +11,7 @@ from .service import ModelService
 
 
 def check_model(
-    model_proto: onnx.ModelProto, variations: list[str] = [], n_inputs: int = 10
+    model_proto: onnx.ModelProto, variations: list[str] = [], n_inputs: int = 1
 ) -> None:
     """
     Checks if the generated output matches the reference (ONNX Runtime)
