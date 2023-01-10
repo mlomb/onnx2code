@@ -1,4 +1,5 @@
 import os
+import warnings
 from collections import defaultdict
 from pathlib import Path
 from textwrap import indent
@@ -26,11 +27,15 @@ class Generator:
     """
 
     def __init__(self, _model_proto: onnx.ModelProto, variations: list[str] = []):
-        model_proto, check = onnx_simplifier.simplify(
-            model=_model_proto,
-            overwrite_input_shapes=get_fixed_input_shapes(_model_proto),
-        )
-        assert check, "ONNX model could not be simplified"
+        try:
+            model_proto, check = onnx_simplifier.simplify(
+                model=_model_proto,
+                overwrite_input_shapes=get_fixed_input_shapes(_model_proto),
+            )
+            assert check, "ONNX model could not be simplified"
+        except Exception as e:
+            model_proto = _model_proto
+            warnings.warn("Model could not be simplified, using as is (" + str(e) + ")")
 
         # save model for later inspection
         if os.getenv("ONNX2CODE_DEBUG", "0") == "1":
