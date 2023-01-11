@@ -9,7 +9,7 @@ from tests.zoo import download_from_zoo, zoo_manifest
 
 # To avoid downloading big models we know are going to fail
 EXCLUDED_MODELS = {
-    "Too big to compile": ["ResNet101-DUC-7.onnx", "ResNet101-DUC-12.onnx"],
+    "Works but is too slow": ["ResNet101-DUC-7.onnx", "ResNet101-DUC-12.onnx"],
     "Operation GlobalAveragePool not implemented": [
         "resnet101-v1-7.onnx",
         "resnet101-v2-7.onnx",

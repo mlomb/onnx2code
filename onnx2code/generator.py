@@ -8,6 +8,7 @@ import numpy as np
 import onnx
 import onnxsim.onnx_simplifier as onnx_simplifier
 
+from .memory import TensorUsageRecord, find_best_layout
 from .ops.operation import OpCall, Operation, OpImpl
 from .result import ModelResult
 from .tensor import TensorData, parse_tensors
@@ -41,7 +42,7 @@ class Generator:
         if os.getenv("ONNX2CODE_DEBUG", "0") == "1":
             tmp = Path(__file__).parent.parent / "tmp"
             tmp.mkdir(exist_ok=True)
-            onnx.save_model(model_proto, tmp / "model.onnx")
+            onnx.save_model(model_proto, (tmp / "model.onnx").__str__())
 
         self.model_proto = model_proto
         self.tensors = {tensor.name: tensor for tensor in parse_tensors(model_proto)}
@@ -109,6 +110,8 @@ class Generator:
                 self.impls[impl] = call
                 self.calls.append(call)
 
+        self._compute_memory_layout()
+
         inputs = [tensor for tensor in self.tensors.values() if tensor.tag == "input"]
         outputs = [tensor for tensor in self.tensors.values() if tensor.tag == "output"]
 
@@ -120,6 +123,49 @@ class Generator:
             source_asm=self._gen_asm_source(),
             weights=self._gen_weights(),
         )
+
+    def _compute_memory_layout(self) -> None:
+        """
+        Finds a good memory layout for intermediate tensors
+        """
+        MAX = 999999999
+        MIN = -1
+
+        inter_tensors: dict[str, TensorUsageRecord] = {}
+
+        # add all intermediate tensors
+        for t in self.tensors.values():
+            if t.tag == "intermediate":
+                inter_tensors[t.variable] = TensorUsageRecord(MAX, MIN, t.size)
+
+        # build usage records knowing the order of calls and data dependencies
+        for index, call in enumerate(self.calls):
+            # for inputs, make sure we reserve the tensor up to index
+            for tensor in call.inputs:
+                if tensor.tag == "intermediate":
+                    rec = inter_tensors[tensor.variable]
+                    rec.last_op = max(rec.last_op, index)
+
+            # for outputs, make sure we reserve the tensor from at least index
+            for tensor in call.outputs:
+                if tensor.tag == "intermediate":
+                    rec = inter_tensors[tensor.variable]
+                    rec.first_op = min(rec.first_op, index)
+
+        # tensors that connect with the output don't have last_op set
+        # set to first_op + 1
+        for var, rec in inter_tensors.items():
+            assert rec.first_op != MAX, "tensor is never used"
+
+            if rec.last_op == -1:
+                rec.last_op = rec.first_op + 1
+
+        self.inter_size, offsets = find_best_layout(list(inter_tensors.values()))
+        self.inter_offsets = {}
+
+        # map tensor names to variables
+        for var, offset in zip(inter_tensors.keys(), offsets):
+            self.inter_offsets[var] = offset
 
     def _gen_weights(self) -> TensorData:
         return np.concatenate(
@@ -137,68 +183,73 @@ class Generator:
     def _gen_c_source(self) -> str:
         source = "#include <math.h>" + "\n" * 2
 
+        # define ASM functions in C
         for impl, call in self.impls.items():
             if impl.lang == "asm":
                 source += f"extern {call.signature()};"
 
+        # implementations
         for impl, call in self.impls.items():
             if impl.lang == "c":
                 source += call.signature() + " {\n"
                 source += indent(impl.full_source().strip(), prefix=" " * 4)
-                source += "\n}"
+                source += "\n}\n"
 
-        intermediate_tensors = ""
+        # define intermediate tensor
+        # it is a shared buffer
+        source += "\n" * 2
+        source += f"float intermediates[{self.inter_size}];"
+        source += "\n" * 2
+
         inference_source = ""
-        offsets: defaultdict[str, int] = defaultdict(int)
+        io_offsets: defaultdict[str, int] = defaultdict(int)
         # build tensor variables
         for tensor in self.tensors.values():
-            if tensor.tag in ["input", "output", "weight"]:
+            if tensor.tag != "welded":
                 if (
                     tensor.tag == "weight"
                     and tensor.data is not None
                     and tensor.data.dtype != np.float32
                 ):
+                    # weight with no data or invalid, skip
                     continue
 
-                decl = "const " if tensor.tag != "output" else ""
+                if tensor.tag == "intermediate":
+                    # IF an intermediate tensor is welded with the output
+                    # we want to preserve the output tensor instead of the intermediate one
+                    # so we skip the definition of the intermediate in favor of the output
+                    skip = False
+                    for other in self.tensors.values():
+                        if other.tag == "output" and other.variable == tensor.variable:
+                            # already defined as output
+                            skip = True
+                            break
+                    if skip:
+                        continue
+
+                if tensor.tag == "intermediate":
+                    offset = self.inter_offsets[tensor.variable]
+                    assert offset is not None, "invliad offset"
+                else:  # input, output or weight
+                    offset = io_offsets[tensor.tag]
+                    io_offsets[tensor.tag] += tensor.size
+
+                decl = "const " if tensor.tag in ["input", "weight"] else ""
                 decl += f"float* {tensor.variable} = "
-                decl += f"{tensor.tag}s"
-                decl += f" + {offsets[tensor.tag]};"
+                decl += f"{tensor.tag}s + {offset};"
 
-                offsets[tensor.tag] += tensor.size
-
-            elif tensor.tag == "intermediate":
-                # IF an intermediate tensor is welded with the output
-                # we want to preserve the output tensor instead of the intermediate one
-                # so we skip the definition of the intermediate in favor of the output
-                skip = False
-                for other in self.tensors.values():
-                    if other.tag == "output" and other.variable == tensor.variable:
-                        # already defined as output
-                        skip = True
-                        break
-                if skip:
-                    continue
-
-                decl = f"float {tensor.variable}[{tensor.size}];"
             else:
                 # welded
                 continue
 
             decl = f"\n{decl : <34} // ({shape_str(tensor.shape)}) {tensor.name}"
-
-            if tensor.tag == "intermediate":
-                intermediate_tensors += decl
-            else:
-                inference_source += decl
+            inference_source += decl
 
         # make op calls
         inference_source += "\n"
         for call in self.calls:
             inference_source += f"\n{call.invocation()};"
 
-        source += "\n" * 2
-        source += intermediate_tensors + "\n" * 2
         source += INFERENCE_SIGNATURE + " {"
         source += indent(inference_source, prefix=" " * 4)
         source += "\n}"
