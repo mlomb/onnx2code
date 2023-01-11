@@ -40,17 +40,30 @@ Only `float` data type is supported.
 | [Transpose](https://github.com/onnx/onnx/blob/main/docs/Operators.md#Transpose) | ✅ perm |
 
 
+## Setting up with Docker
 
-## Usage
+We provide a ready to use Docker image:
 
-Required software:
+```sh
+docker run --rm -it -v $PWD/mnist.onnx:/app/input.onnx:ro -v $PWD/output:/app/output:rw mlomb/onnx2code:latest --variations=asm,c
+```
 
-* gcc, nasm
+The command above will generate C and ASM code for the `mnist.onnx` model in the `output` folder.
+
+## Setting up locally
+
+### Prerequisites
+
+* gcc, nasm (required if checking models)
 * Python 3.10
 * [pipenv](https://pypi.org/project/pipenv/)
 
-To generate code from an ONNX model:
+Clone and install dependencies with `pipenv install`.
 
-```python
-python -m onnx2code --variation=c model.onnx output_folder
+### Run
+
+To generate code from an ONNX model, run the following command inside a pipenv shell:
+
+```sh
+python -m onnx2code --variation=asm,c mnist.onnx output_folder
 ```

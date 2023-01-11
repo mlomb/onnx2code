@@ -1,11 +1,10 @@
 name: CI
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   style:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
 
@@ -31,8 +30,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-        with:
-          submodules: recursive
 
       - name: Install gcc and nasm
         run: sudo apt-get install -y gcc nasm
@@ -51,3 +48,30 @@ jobs:
 
       - name: Run tests
         run: pipenv run python -m pytest
+
+  deploy_docker_image:
+    needs: [style, test]
+    if: github.ref == 'refs/heads/main'
+    name: Push Docker image to Docker Hub
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: mlomb/onnx2code
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v3
+        with:
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
