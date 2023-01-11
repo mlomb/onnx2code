@@ -3,7 +3,7 @@ import subprocess
 import tempfile
 from multiprocessing import shared_memory
 from pathlib import Path
-from subprocess import call
+from subprocess import PIPE, run
 from typing import Any
 
 import numpy as np
@@ -14,6 +14,18 @@ from .util import ShapesMap
 
 TensorsMap = dict[str, TensorData]
 TensorsList = list[TensorData]
+
+
+def _run_compilation_command(cmd: list[str]) -> None:
+    """
+    Runs a given compilation command as a subprocess
+
+    :param cmd: A list containing the command and its CLI args
+    :raises SyntaxError: If the process return code is non-zero
+    """
+    compilation_process = run(cmd, stderr=PIPE)
+    if compilation_process.returncode != 0:
+        raise SyntaxError(compilation_process.stderr.decode("utf8"))
 
 
 class ModelService:
@@ -64,40 +76,39 @@ class ModelService:
             with open(file, "w") as f:
                 f.write(content)
 
-        compile_asm_cmd = [
-            "nasm",
-            "-f",
-            "elf64",
-            str(asm_file),
-            "-o",
-            str(asm_object),
-            "-g",
-        ]
-        compile_svc_cmd = [
-            "gcc",
-            "-m64",  # 64 bit env
-            str(asm_object),
-            str(h_file),
-            str(c_file),
-            str(svc_file),
-            "-o",
-            str(self.service_executable),
-            "-lrt",  # for shm
-            "-lm",  # for math
-            "-O3",
-            "-g",
-            "-fsanitize=address",
-            "-std=c99",
-            "-Wall",
-        ]
+        # TODO: Disable warnings in nasm compilation
+        _run_compilation_command(
+            [
+                "nasm",
+                "-f",
+                "elf64",
+                str(asm_file),
+                "-o",
+                str(asm_object),
+                "-g",
+            ]
+        )
 
-        # TODO: hacer una funcion que corra el comando y parse el output
-        #       si falla poner el output en la Exception
-        #       y todo el resto del output tirarlo (warning etc) asi no poluciona
-        if call(compile_asm_cmd) != 0:
-            raise Exception("failure compiling asm")
-        if call(compile_svc_cmd) != 0:
-            raise Exception("failure compiling service")
+        _run_compilation_command(
+            [
+                "gcc",
+                "-m64",  # 64 bit env
+                str(asm_object),
+                str(h_file),
+                str(c_file),
+                str(svc_file),
+                "-o",
+                str(self.service_executable),
+                "-lrt",  # for shm
+                "-lm",  # for math
+                "-O3",
+                "-g",
+                "-w",  # disable warnings
+                "-fsanitize=address",
+                "-std=c99",
+                "-Wall",
+            ]
+        )
 
     def _boot(self) -> None:
         """
