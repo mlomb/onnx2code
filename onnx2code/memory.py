@@ -1,5 +1,4 @@
 import math
-from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 # We implement different memory strategies used in TFLite
@@ -22,6 +21,7 @@ class TensorUsageRecord:
 Records = list[TensorUsageRecord]
 Offsets = list[int | None]
 Result = tuple[int, Offsets]
+
 
 ##########################
 # Naive
