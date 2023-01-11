@@ -1,9 +1,5 @@
-from onnx2code.util import (
-    compute_strides,
-    get_attribute,
-    resolve_padding,
-    resolve_stride,
-)
+from onnx2code.util import (compute_strides, get_attribute, resolve_padding,
+                            resolve_stride)
 
 from .operation import OpCall, Operation, OpImpl
 
