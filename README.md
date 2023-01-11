@@ -1,6 +1,6 @@
 # onnx2code
 
-
+Generate plain C/ASM code for inference of ONNX models without dependencies
 
 ## Model support
 
@@ -28,7 +28,18 @@ Only `float` data type is supported.
 
 | Operator | Attribute support |
 |---|---|
-| Add | a |
+| [Add](https://github.com/onnx/onnx/blob/main/docs/Operators.md#Add), [Div](https://github.com/onnx/onnx/blob/main/docs/Operators.md#Div), [Mul](https://github.com/onnx/onnx/blob/main/docs/Operators.md#Mul), [Sub](https://github.com/onnx/onnx/blob/main/docs/Operators.md#Sub) | ✅ with broadcasting |
+| [Concat](https://github.com/onnx/onnx/blob/main/docs/Operators.md#Concat) | ✅ with multiple inputs<br/>✅ axis |
+| [Conv](https://github.com/onnx/onnx/blob/main/docs/Operators.md#Conv) | ✅ bias<br/>✅ stride<br/>✅ padding (and `auto_pad`)<br/>❌ dilations<br/>❌ depthwise (group != 1) |
+| [Sum](https://github.com/onnx/onnx/blob/main/docs/Operators.md#Sum) | ✅ with multiple inputs<br/>❌ with broadcasting |
+| [Relu](https://github.com/onnx/onnx/blob/main/docs/Operators.md#Relu), [Tanh](https://github.com/onnx/onnx/blob/main/docs/Operators.md#Tanh), [Sigmoid](https://github.com/onnx/onnx/blob/main/docs/Operators.md#Sigmoid),  [Clip](https://github.com/onnx/onnx/blob/main/docs/Operators.md#Clip) | ✅ |
+| [Gemm](https://github.com/onnx/onnx/blob/main/docs/Operators.md#Gemm) | ✅ with bias<br/>❌ transpose A<br/>✅ tranpose B<br/>❌ alpha != 1<br/>❌ beta != 1 |
+| [Identity](https://github.com/onnx/onnx/blob/main/docs/Operators.md#Identity) | ✅ |
+| [MaxPool](https://github.com/onnx/onnx/blob/main/docs/Operators.md#MaxPool), [AveragePool](https://github.com/onnx/onnx/blob/main/docs/Operators.md#AveragePool) | ✅ stride<br/>✅  padding (and `auto_pad`)<br/>❌ dilations<br/>❌ storage_order != 0<br/>❌ count_include_pad != 0 |
+| [Softmax](https://github.com/onnx/onnx/blob/main/docs/Operators.md#Softmax) | ✅ stride<br/>✅ axis |
+| [Transpose](https://github.com/onnx/onnx/blob/main/docs/Operators.md#Transpose) | ✅ perm |
+
+
 
 ## Usage
 
@@ -37,3 +48,9 @@ Required software:
 * gcc, nasm
 * Python 3.10
 * [pipenv](https://pypi.org/project/pipenv/)
+
+To generate code from an ONNX model:
+
+```python
+python -m onnx2code --variation=c model.onnx output_folder
+```
