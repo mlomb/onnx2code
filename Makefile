@@ -6,9 +6,9 @@ mnist:
 
 lint:
 	flake8 . --count --statistics && \
-	isort . --skip=data
 
 format:
+	isort . --skip=data
 	black --verbose . --exclude=data
 
 precommit: lint format test
