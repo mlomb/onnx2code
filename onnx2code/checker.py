@@ -7,20 +7,13 @@ import onnx
 import onnxruntime
 
 from .generator import Generator
+from .result import ModelResult
 from .service import ModelService
 
 
-def check_model(
-    model_proto: onnx.ModelProto, variations: list[str] = [], n_inputs: int = 1
+def check_model_result(
+    model_proto: onnx.ModelProto, result: ModelResult, n_inputs: int = 1
 ) -> None:
-    """
-    Checks if the generated output matches the reference (ONNX Runtime)
-
-    :param n_inputs: random inputs will be generated
-    """
-
-    result = Generator(model_proto, variations).generate()
-
     ort_sess = onnxruntime.InferenceSession(model_proto.SerializeToString())
 
     with ModelService(result) as service:
@@ -53,3 +46,17 @@ def check_model(
                 )
 
             assert correct, "output mismatch"
+
+
+def check_model(
+    model_proto: onnx.ModelProto, variations: list[str] = [], n_inputs: int = 1
+) -> None:
+    """
+    Checks if the generated output matches the reference (ONNX Runtime)
+
+    :param n_inputs: random inputs will be generated
+    """
+
+    result = Generator(model_proto, variations).generate()
+
+    check_model_result(model_proto, result, n_inputs)
