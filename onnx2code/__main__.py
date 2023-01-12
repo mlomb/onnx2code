@@ -1,4 +1,5 @@
 import argparse
+import sys
 from pathlib import Path
 
 import onnx
@@ -34,7 +35,7 @@ def main() -> None:
         model_proto = onnx.load(args.input_model)
     except Exception as e:
         print("Error loading ONNX model: ", e)
-        return
+        sys.exit(1)
 
     variations = [v.strip() for v in args.variations.split(",")]
 
@@ -42,7 +43,7 @@ def main() -> None:
         result = Generator(model_proto, variations).generate()
     except Exception as e:
         print("Error generating code: ", e)
-        return
+        sys.exit(2)
 
     print("Input shapes:", result.input_shapes)
     print("Output shapes:", result.output_shapes)
@@ -73,7 +74,7 @@ def main() -> None:
             check_model_result(model_proto, result, args.checks)
         except Exception as e:
             print("Error checking model: ", e)
-            return
+            sys.exit(3)
 
     print("Done")
 
