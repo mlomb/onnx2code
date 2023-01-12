@@ -2,6 +2,7 @@ FROM python:3.10
 
 WORKDIR /app
 
+RUN apt-get update && apt-get install -y --no-install-recommends gcc nasm
 RUN pip install pipenv
 
 COPY Pipfile .
