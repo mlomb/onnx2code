@@ -4,6 +4,7 @@ from pathlib import Path
 import onnx
 from rich import print
 
+from .checker import check_model_result
 from .generator import Generator
 
 
@@ -19,13 +20,20 @@ def main() -> None:
         default="asm, c",
         action="store",
     )
+    parser.add_argument(
+        "--checks",
+        type=int,
+        help="compile and test the model with the provided amount of inputs",
+        default=0,
+        action="store",
+    )
 
     args = parser.parse_args()
 
     try:
         model_proto = onnx.load(args.input_model)
     except Exception as e:
-        print("Error: ", e)
+        print("Error loading ONNX model: ", e)
         return
 
     variations = [v.strip() for v in args.variations.split(",")]
@@ -33,7 +41,7 @@ def main() -> None:
     try:
         result = Generator(model_proto, variations).generate()
     except Exception as e:
-        print("Error: ", e)
+        print("Error generating code: ", e)
         return
 
     print("Input shapes:", result.input_shapes)
@@ -57,6 +65,15 @@ def main() -> None:
     ]:
         with open(file, "w") as f:
             f.write(content)
+
+    if args.checks > 0:
+        print("Checking model with", args.checks, "random inputs")
+
+        try:
+            check_model_result(model_proto, result, args.checks)
+        except Exception as e:
+            print("Error checking model: ", e)
+            return
 
     print("Done")
 

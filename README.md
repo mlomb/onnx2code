@@ -42,7 +42,7 @@ Only `float` data type is supported.
 
 ## Setting up with Docker
 
-We provide a ready to use Docker image:
+We provide a ready to use [Docker image](https://hub.docker.com/r/mlomb/onnx2code):
 
 ```sh
 docker run --rm -it -v $PWD/mnist.onnx:/app/input.onnx:ro -v $PWD/output:/app/output:rw mlomb/onnx2code:latest --variations=asm,c
