@@ -29,8 +29,8 @@ int main(int argc, char **argv) {
     long outputs_size;
 
     const float* inputs = (const float*) read_file("./sample_inputs.bin", NULL);
-    const float* truth_outputs = (const float*) read_file("./sample_outputs.bin", &outputs_size);
     const float* weights = (const float*) read_file("./weights.bin", NULL);
+    const float* truth_outputs = (const float*) read_file("./sample_outputs.bin", &outputs_size);
     float* outputs = (float*) malloc(outputs_size);
 
     inference(weights, inputs, outputs);

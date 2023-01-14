@@ -6,6 +6,9 @@ from typing import Any
 
 
 def download_from_zoo(path: str, expected_size: int | None = None) -> Path:
+    """
+    Download files from the repo https://github.com/onnx/models
+    """
     target = Path(os.path.dirname(__file__)) / "../data" / path
 
     if target.is_file():

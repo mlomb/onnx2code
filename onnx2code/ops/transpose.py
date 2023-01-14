@@ -24,9 +24,8 @@ class Transpose(Operation):
 
     def call(self) -> OpCall:
         return OpCall(
-            name="Transpose",
+            sig_name="Transpose",
             sig_params=[self.inputs[0].shape, self.outputs[0].shape, self.perm],
-            params=["A", "B"],
             inputs=self.inputs,
             outputs=self.outputs,
         )
@@ -50,7 +49,7 @@ class TransposeC(Transpose):
 
         source = "\n".join([loop + "{" for loop in for_loops])
         source += (
-            "\n\tB[" + " + ".join(out_index) + "] = A[" + " + ".join(in_index) + "];\n"
+            "\n\tOUT[" + "+".join(out_index) + "] = A[" + "+".join(in_index) + "];\n"
         )
         source += "}" * len(for_loops)
         source += "\n"

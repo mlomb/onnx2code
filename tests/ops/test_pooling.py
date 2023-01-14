@@ -46,6 +46,3 @@ def test_maxpool(
 
     model = tf.keras.Model(inputs=[input], outputs=[pool])
     check_keras(model)
-
-
-# TODO: 3D

@@ -50,7 +50,9 @@ class ModelService:
         return self
 
     def _compile(self) -> None:
-        if os.getenv("ONNX2CODE_DEBUG", "0") == "1":
+        debug = os.getenv("ONNX2CODE_DEBUG", "0") == "1"
+
+        if debug:
             # save for later inspection
             temp_dir = Path(__file__).parent.parent / "tmp/"
         else:
@@ -76,7 +78,6 @@ class ModelService:
             with open(file, "w") as f:
                 f.write(content)
 
-        # TODO: Disable warnings in nasm compilation
         _run_compilation_command(
             [
                 "nasm",
@@ -85,8 +86,8 @@ class ModelService:
                 str(asm_file),
                 "-o",
                 str(asm_object),
-                "-g",
             ]
+            + (["-g", "-w+all", "-w+error"] if debug else [])
         )
 
         _run_compilation_command(
@@ -99,15 +100,24 @@ class ModelService:
                 str(svc_file),
                 "-o",
                 str(self.service_executable),
+                "-I",
+                temp_dir.__str__(),
                 "-lrt",  # for shm
                 "-lm",  # for math
                 "-O3",
-                "-g",
-                "-w",  # disable warnings
-                "-fsanitize=address",
                 "-std=c99",
-                "-Wall",
             ]
+            + (
+                [
+                    "-g",
+                    "-fsanitize=address",
+                    "-Wall",
+                    "-Werror",
+                    "-Wno-unused-result",
+                ]
+                if debug
+                else []
+            )
         )
 
     def _boot(self) -> None:

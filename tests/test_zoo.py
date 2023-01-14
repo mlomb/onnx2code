@@ -89,21 +89,24 @@ def check_io_is_float(model: Any) -> None:
 @pytest.mark.parametrize("variation", ["c"])
 @pytest.mark.parametrize("model", zoo_manifest(), ids=idfn)
 def test_zoo(model: Any, variation: str) -> None:
-    if model["opset_version"] < 7:
-        pytest.skip("Opset version < 7")
+    # avoid downloading big models!
 
     # manual exclusion
     for reason, models in EXCLUDED_MODELS.items():
         if idfn(model) in models:
             pytest.skip(reason)
 
-    # avoid downloading big models!
-    # try to early out if IO is incompatible
+    # opset unsupported
+    if model["opset_version"] < 7:
+        pytest.skip("Opset version < 7")
+
+    # incompatible I/O
     try:
         check_io_is_float(model)
     except NotImplementedError as e:
         pytest.skip(e.__str__())
-    # early out if model is quantized
+
+    # model is quantized
     if "int8" in model["model"] or "qdq" in model["model"]:
         pytest.skip("Quantized models are not supported")
 

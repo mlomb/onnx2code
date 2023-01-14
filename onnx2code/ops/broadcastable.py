@@ -25,9 +25,8 @@ class Broadcastable(Operation):
 
     def call(self) -> OpCall:
         return OpCall(
-            name=self.op,
+            sig_name=self.op,
             sig_params=[self.input_A.shape, self.input_B.shape],
-            params=["A", "B", "C"],
             inputs=self.inputs,
             outputs=self.outputs,
         )
@@ -49,7 +48,7 @@ class BroadcastableC(Broadcastable):
             source += f"""
             const float D = B[0];
             for (int i = 0; i < {self.inputs[0].size}; i++) {{
-                C[i] = A[i] {symbol} D;
+                OUT[i] = A[i] {symbol} D;
             }}
             """
         else:
@@ -88,7 +87,7 @@ class BroadcastableC(Broadcastable):
                 A_index = f"{x[0]}" + (" + i" if x_is_consecutive else "")
                 B_index = f"{y[0]}" + (" + i" if y_is_consecutive else "")
 
-                source += f"for(int i = 0; i < {size}; i++) C[{offset} + i] = A[{A_index}] {symbol} B[{B_index}];\n"
+                source += f"for(int i = 0; i < {size}; i++) OUT[{offset} + i] = A[{A_index}] {symbol} B[{B_index}];\n"
                 offset += size
 
         return OpImpl(lang="c", source=source)

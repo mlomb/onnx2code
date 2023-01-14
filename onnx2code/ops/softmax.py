@@ -9,7 +9,7 @@ class Softmax(Operation):
     """
     Softmax operator
 
-    https://github.com/onnx/onnx/blob/main/docs/Operators.md#Softmax
+    https://github.com/onnx/onnx/blob/main/docs/Operators.md#softmax
     """
 
     node_types = {"Softmax"}
@@ -29,9 +29,8 @@ class Softmax(Operation):
 
     def call(self) -> OpCall:
         return OpCall(
-            name="Softmax",
+            sig_name="Softmax",
             sig_params=[],
-            params=["X", "Y"],
             inputs=self.inputs,
             outputs=self.outputs,
         )
@@ -70,14 +69,14 @@ class SoftmaxC(Softmax):
             float sum = 0.0f;
 
             for (int i = 0; i < {labels_size}; ++i) {{
-                max = fmax(max, X[{offset}]);
+                max = fmax(max, A[{offset}]);
             }}
             for (int i = 0; i < {labels_size}; ++i) {{
-                Y[{offset}] = exp(X[{offset}] - max);
-                sum += Y[{offset}];
+                OUT[{offset}] = exp(A[{offset}] - max);
+                sum += OUT[{offset}];
             }}
             for (int i = 0; i < {labels_size}; ++i) {{
-                Y[{offset}] /= sum;
+                OUT[{offset}] /= sum;
             }}
         """
         )

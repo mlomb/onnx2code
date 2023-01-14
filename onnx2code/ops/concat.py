@@ -1,10 +1,12 @@
-from ..util import LETTERS, compute_strides, get_attribute
-from .operation import OpCall, Operation, OpImpl
+from ..util import compute_strides, get_attribute
+from .operation import LETTERS, OpCall, Operation, OpImpl
 
 
 class Concat(Operation):
     """
     Concat operator
+
+    https://github.com/onnx/onnx/blob/main/docs/Operators.md#concat
     """
 
     node_types = {"Concat"}
@@ -18,9 +20,8 @@ class Concat(Operation):
 
     def call(self) -> OpCall:
         return OpCall(
-            name="Concat",
+            sig_name="Concat",
             sig_params=[inp.shape for inp in self.inputs],
-            params=LETTERS[: len(self.inputs)] + ["OUT"],
             inputs=self.inputs,
             outputs=self.outputs,
         )

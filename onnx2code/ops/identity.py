@@ -21,9 +21,8 @@ class Identity(Operation):
 
     def call(self) -> OpCall:
         return OpCall(
-            name="Identity",
+            sig_name="Identity",
             sig_params=[self.size],
-            params=["A", "B"],
             inputs=self.inputs,
             outputs=self.outputs,
         )
@@ -34,7 +33,7 @@ class IdentityC(Identity):
     def impl(self) -> OpImpl:
         source = f"""
         for (int i = 0; i < {self.size}; i++) {{
-            B[i] = A[i];
+            OUT[i] = A[i];
         }}
         """
 

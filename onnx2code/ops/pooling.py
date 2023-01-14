@@ -7,8 +7,8 @@ class Pooling(Operation):
     """
     MaxPool, AveragePool operators
 
-    https://github.com/onnx/onnx/blob/main/docs/Operators.md#MaxPool
-    https://github.com/onnx/onnx/blob/main/docs/Operators.md#AveragePool
+    https://github.com/onnx/onnx/blob/main/docs/Operators.md#maxpool
+    https://github.com/onnx/onnx/blob/main/docs/Operators.md#averagepool
     """
 
     node_types = {"MaxPool", "AveragePool"}
@@ -35,9 +35,8 @@ class Pooling(Operation):
 
     def call(self) -> OpCall:
         return OpCall(
-            name=self.op,
+            sig_name=self.op,
             sig_params=[self.X.shape, [self.KW, self.KH], self.strides, self.pads],
-            params=["X", "Y"],
             inputs=self.inputs,
             outputs=self.outputs,
         )
@@ -71,7 +70,7 @@ class PoolingC(Pooling):
                             const int ih = {-pads_start[0]} + (h * {self.strides[0]}) + hh;
                             const int iw = {-pads_start[1]} + (w * {self.strides[1]}) + ww;
                             if(ih >= 0 && ih < {H} && iw >= 0 && iw < {W}) {{
-                                const float val = X[
+                                const float val = A[
                                     c * {input_strides[1]} +
                                     ih * {input_strides[2]} +
                                     iw * {input_strides[3]}
@@ -81,7 +80,7 @@ class PoolingC(Pooling):
                             }}
                         }}
                     }}
-                    Y[
+                    OUT[
                         c * {output_strides[1]} +
                         h * {output_strides[2]} +
                         w * {output_strides[3]}

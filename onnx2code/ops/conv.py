@@ -1,8 +1,8 @@
 from onnx2code.util import (
     compute_strides,
     get_attribute,
-    resolve_padding,
-    resolve_stride,
+    resolve_padding_attribute,
+    resolve_stride_attribute,
 )
 
 from .operation import OpCall, Operation, OpImpl
@@ -34,16 +34,16 @@ class Conv(Operation):
         self.B = self.inputs[2] if len(self.inputs) == 3 else None
         self.Y = self.outputs[0]
 
-        self.strides = resolve_stride(self.node)
-        self.pads = resolve_padding(self.node, self.X.shape, self.W.shape)
+        self.strides = resolve_stride_attribute(self.node)
+        self.pads = resolve_padding_attribute(self.node, self.X.shape, self.W.shape)
 
     def call(self) -> OpCall:
         return OpCall(
-            name="Conv",
+            sig_name="Conv",
             sig_params=[self.X.shape, self.W.shape, self.strides, self.pads],
-            params=["X", "W", "B", "Y"] if self.B is not None else ["X", "W", "Y"],
             inputs=self.inputs,
             outputs=self.outputs,
+            input_names=("X", "W", "B"),
         )
 
 
@@ -98,7 +98,7 @@ class ConvC(Conv):
                         }}
                     }}
 
-                    Y[
+                    OUT[
                         f * {output_strides[1]} +
                         h * {output_strides[2]} +
                         w * {output_strides[3]}

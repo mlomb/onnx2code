@@ -5,9 +5,9 @@ from dataclasses import dataclass
 # Since we are using CPU we aim to the Memory Offset Calculation approach
 #
 # See:
-#  * https://arxiv.org/pdf/2001.03288.pdf
-#  * https://blog.tensorflow.org/2020/10/optimizing-tensorflow-lite-runtime.html
-#  * https://github.com/tensorflow/tensorflow/blob/1b36c9fb27ce899e19ddf65da3c0920861210472/tensorflow/lite/delegates/gpu/common/memory_management
+#  * https://arxiv.org/pdf/2001.03288.pdf (main paper)
+#  * https://blog.tensorflow.org/2020/10/optimizing-tensorflow-lite-runtime.html (blog post)
+#  * https://github.com/tensorflow/tensorflow/blob/1b36c9fb27ce899e19ddf65da3c0920861210472/tensorflow/lite/delegates/gpu/common/memory_management (ref code)
 
 
 @dataclass

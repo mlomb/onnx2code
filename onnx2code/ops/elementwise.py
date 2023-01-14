@@ -1,7 +1,7 @@
 import numpy as np
 
-from ..util import LETTERS, get_attribute
-from .operation import OpCall, Operation, OpImpl
+from ..util import get_attribute
+from .operation import LETTERS, OpCall, Operation, OpImpl
 
 
 class Elementwise(Operation):
@@ -31,9 +31,8 @@ class Elementwise(Operation):
 
     def call(self) -> OpCall:
         return OpCall(
-            name=self.op,
+            sig_name=self.op,
             sig_params=[self.size],
-            params=LETTERS[: len(self.inputs)] + ["OUT"],
             inputs=self.inputs,
             outputs=self.outputs,
         )

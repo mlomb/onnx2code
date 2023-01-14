@@ -22,15 +22,15 @@ def get_shape_from_value_info_proto(v: onnx.ValueInfoProto) -> TensorShape:
 def get_value_info_all(m: onnx.ModelProto, name: str) -> Optional[onnx.ValueInfoProto]:
     for v in m.graph.value_info:
         if v.name == name:
-            return v
+            return v  # type: ignore
 
     for v in m.graph.input:
         if v.name == name:
-            return v
+            return v  # type: ignore
 
     for v in m.graph.output:
         if v.name == name:
-            return v
+            return v  # type: ignore
 
     return None
 
@@ -88,12 +88,15 @@ def compute_strides(shape: list[int]) -> list[int]:
     return strides
 
 
-def resolve_stride(node: onnx.NodeProto) -> list[int]:
+def resolve_stride_attribute(node: onnx.NodeProto) -> list[int]:
+    """
+    Retrieves the strides attribute from a node or returns the default value
+    """
     strides: list[int] = get_attribute(node, "strides", [1] * 2)
     return strides
 
 
-def compute_pad(
+def compute_pad_in_dimension(
     in_dim: int,
     stride: int,
     kernel: int,
@@ -123,14 +126,16 @@ def compute_pad(
     return pad_head, pad_tail
 
 
-def resolve_padding(node: onnx.NodeProto, X: TensorShape, W: TensorShape) -> list[int]:
+def resolve_padding_attribute(
+    node: onnx.NodeProto, X: TensorShape, W: TensorShape
+) -> list[int]:
     """
-    Resolve padding attribute from node
+    Retrieves the padding attribute from a node or returns the default value
     """
     ndims = len(X) - 2  # number of spatial dimensions (excluding batch and channel)
     pads: list[int] = get_attribute(node, "pads", None)
     auto_pad = get_attribute(node, "auto_pad", b"NOTSET")
-    stride = resolve_stride(node)
+    stride = resolve_stride_attribute(node)
 
     if pads is not None:
         assert auto_pad == b"NOTSET", "Cannot specify both pads and auto_pad"
@@ -138,48 +143,10 @@ def resolve_padding(node: onnx.NodeProto, X: TensorShape, W: TensorShape) -> lis
 
     pads = [0] * ndims * 2
     for i in range(ndims):
-        pad_head, pad_tail = compute_pad(X[i + 2], stride[i], W[i + 2], auto_pad)
+        pad_head, pad_tail = compute_pad_in_dimension(
+            X[i + 2], stride[i], W[i + 2], auto_pad
+        )
         pads[i] = pad_head
         pads[i + ndims] = pad_tail
 
     return pads
-
-
-def shape_str(shape: list[int], sep: str = "x") -> str:
-    """
-    Returns a string representation of the shape with the given separator
-
-    For example, shape_str([1, 2, 3], "x") returns "1x2x3"
-    """
-    return sep.join(map(str, shape))
-
-
-# used as tensor names
-LETTERS = [
-    "A",
-    "B",
-    "C",
-    "D",
-    "E",
-    "F",
-    "G",
-    "H",
-    "I",
-    "J",
-    "K",
-    "L",
-    "M",
-    "N",
-    "O",
-    "P",
-    "Q",
-    "R",
-    "S",
-    "T",
-    "U",
-    "V",
-    "W",
-    "X",
-    "Y",
-    "Z",
-]

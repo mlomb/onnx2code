@@ -48,7 +48,7 @@ class GEMM(Operation):
 
     def call(self) -> OpCall:
         return OpCall(
-            name="GEMM",
+            sig_name="GEMM",
             sig_params=[
                 self.hasC,
                 self.N,
@@ -56,7 +56,6 @@ class GEMM(Operation):
                 self.K,
                 self.transB,
             ],
-            params=["A", "B"] + (["C"] if self.hasC else []) + ["Y"],
             inputs=self.inputs,
             outputs=self.outputs,
         )
@@ -76,7 +75,7 @@ class GEMMC(GEMM):
                 for(int i = 0; i < {M}; i++) {{
                     sum += A[row * {M} + i] * B[{index_B}];
                 }}
-                Y[row * {K} + col] = sum{f' + C[row * {K} + col]' if self.hasC else ''};
+                OUT[row * {K} + col] = sum{f' + C[row * {K} + col]' if self.hasC else ''};
             }}
         }}
         """

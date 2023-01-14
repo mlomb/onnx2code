@@ -14,6 +14,11 @@ from .service import ModelService
 def check_model_result(
     model_proto: onnx.ModelProto, result: ModelResult, n_inputs: int = 1
 ) -> None:
+    """
+    Checks if the generated output matches the reference runtime (ONNX Runtime)
+
+    :param n_inputs: random inputs will be generated
+    """
     ort_sess = onnxruntime.InferenceSession(model_proto.SerializeToString())
 
     with ModelService(result) as service:
@@ -29,12 +34,12 @@ def check_model_result(
 
             assert len(out1) == len(out2)
 
-            correct = True
+            output_matches = True
 
             for o1, o2 in zip(out1, out2):
-                correct = correct and np.allclose(o1, o2, atol=1e-5)
+                output_matches = output_matches and np.allclose(o1, o2, atol=1e-5)
 
-            if not correct and os.getenv("ONNX2CODE_DEBUG", "0") == "1":
+            if not output_matches and os.getenv("ONNX2CODE_DEBUG", "0") == "1":
                 temp_dir = Path(__file__).parent.parent / "tmp/"
                 inputs_np = np.concatenate([inp.reshape(-1) for inp in inputs.values()])
                 outputs_np = np.concatenate([o.reshape(-1) for o in out2])
@@ -45,18 +50,18 @@ def check_model_result(
                     temp_dir / "debugger.c",
                 )
 
-            assert correct, "output mismatch"
+            if not output_matches:
+                raise RuntimeError("output mismatch")
 
 
 def check_model(
     model_proto: onnx.ModelProto, variations: list[str] = [], n_inputs: int = 1
 ) -> None:
     """
-    Checks if the generated output matches the reference (ONNX Runtime)
+    Generates code for the given model and checks if the generated output matches the reference runtime (ONNX Runtime)
 
     :param n_inputs: random inputs will be generated
     """
-
     result = Generator(model_proto, variations).generate()
 
     check_model_result(model_proto, result, n_inputs)

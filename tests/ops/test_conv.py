@@ -3,31 +3,17 @@ import tensorflow as tf
 
 from ..util import check_keras
 
-# @pytest.mark.parametrize("shape", [(4, 3, 1), (3, 4, 3), (10, 10, 5), (32, 32, 3)])
-# @pytest.mark.parametrize("kernel_size", [1, 2, 3])
-# @pytest.mark.parametrize("filters", [1, 2, 3, 10])
-# @pytest.mark.parametrize("padding", ["valid", "same"])
-# @pytest.mark.parametrize(
-#     "stride_and_dilation",
-#     [
-#         (1, 1),
-#         (2, 1),
-#         (1, 2),
-#     ],
-#     ids=lambda x: f"s{x[0]}d{x[1]}",
-# )
-# @pytest.mark.parametrize("use_bias", [False, True], ids=["no_bias", "bias"])
 
-
-@pytest.mark.parametrize("shape", [(28, 28, 1), (14, 14, 8)])
-@pytest.mark.parametrize("kernel_size", [5])
-@pytest.mark.parametrize("filters", [8, 16])
-@pytest.mark.parametrize("padding", ["same"])
+@pytest.mark.parametrize("shape", [(4, 3, 1), (3, 4, 3), (10, 10, 5), (32, 32, 3)])
+@pytest.mark.parametrize("kernel_size", [1, 2, 3])
+@pytest.mark.parametrize("filters", [1, 2, 3, 10])
+@pytest.mark.parametrize("padding", ["valid", "same"])
 @pytest.mark.parametrize(
     "stride_and_dilation",
     [
         (1, 1),
         (2, 1),
+        # TODO: dilation?
     ],
     ids=lambda x: f"s{x[0]}d{x[1]}",
 )

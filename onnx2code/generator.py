@@ -12,7 +12,7 @@ from .memory import TensorUsageRecord, find_best_layout
 from .ops.operation import OpCall, Operation, OpImpl
 from .result import ModelResult
 from .tensor import TensorData, parse_tensors
-from .util import get_fixed_input_shapes, shape_str
+from .util import get_fixed_input_shapes
 
 REGISTER_ORDER = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]
 INFERENCE_SIGNATURE = (
@@ -242,7 +242,7 @@ class Generator:
                 # welded
                 continue
 
-            decl = f"\n{decl : <34} // ({shape_str(tensor.shape)}) {tensor.name}"
+            decl = f"\n{decl : <34} // ({tensor.shape_str()}) {tensor.name}"
             inference_source += decl
 
         # make op calls
@@ -262,7 +262,11 @@ class Generator:
         for impl, call in self.impls.items():
             if impl.lang == "asm":
                 comments = [call.signature()] + [
-                    f"{p}: {REGISTER_ORDER[i]}" for i, p in enumerate(call.params)
+                    f"{p}: {REGISTER_ORDER[i]}"
+                    for i, p in enumerate(
+                        call.input_names[: len(call.inputs)]
+                        + call.output_names[: len(call.outputs)]
+                    )
                 ]
                 source = "\n".join(
                     [

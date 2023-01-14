@@ -6,7 +6,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-extern void inference(const float* weights, const float* inputs, float* outputs);
+#include "model.h"
 
 void* map_shared_memory(const char* name) {
     int fd = shm_open(name, O_RDWR | O_CREAT, 0666);

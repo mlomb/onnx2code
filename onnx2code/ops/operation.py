@@ -8,14 +8,45 @@ import onnx
 
 from ..tensor import TensorInfo
 
+# used as tensor names
+LETTERS = (
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "J",
+    "K",
+    "L",
+    "M",
+    "N",
+    "O",
+    "P",
+    "Q",
+    "R",
+    "S",
+    "T",
+    "U",
+    "V",
+    "W",
+    "X",
+    "Y",
+    "Z",
+)
+
 
 @dataclass
 class OpCall:
-    name: str
+    sig_name: str
     sig_params: list[int | str | list[int] | list[str]]
-    params: list[str]
     inputs: list[TensorInfo]
     outputs: list[TensorInfo]
+    input_names: tuple[str, ...] = LETTERS
+    output_names: tuple[str, ...] = ("OUT",)
 
     def fn_name(self) -> str:
         str_sig_params = []
@@ -25,17 +56,18 @@ class OpCall:
             else:
                 str_sig_params.append(str(sig_param))
 
-        return f"{self.name}{'_' if len(str_sig_params) > 0 else ''}" + "_".join(
+        return f"{self.sig_name}{'_' if len(str_sig_params) > 0 else ''}" + "_".join(
             str_sig_params
         )
 
     def signature(self) -> str:
-        params = ", ".join(
-            f"{'const ' if i < len(self.inputs) else ''}float* {name}"
-            for i, name in enumerate(self.params)
-        )
+        params = []
+        for i in range(len(self.inputs)):
+            params.append(f"const float* {self.input_names[i]}")
+        for i in range(len(self.outputs)):
+            params.append(f"float* {self.output_names[i]}")
 
-        return f"void {self.fn_name()}({params})"
+        return f"void {self.fn_name()}({', '.join(params)})"
 
     def invocation(self) -> str:
         return (

@@ -20,7 +20,6 @@ The following models have been tested and work as expected.
 
 * Minimum ONNX opset version: **7**
 * Quantized models are not supported
-* Only `float` tensors supported
 
 ## Operator support
 
@@ -45,7 +44,7 @@ Only `float` data type is supported.
 We provide a ready to use [Docker image](https://hub.docker.com/r/mlomb/onnx2code):
 
 ```sh
-docker run --rm -it -v "$PWD/mnist.onnx":/app/input.onnx:ro -v "$PWD/output":/app/output:rw mlomb/onnx2code:latest --variations=asm,c
+docker run --rm -it -v "$PWD/mnist.onnx":/app/input.onnx:ro -v "$PWD/output":/app/output:rw mlomb/onnx2code:latest --variations=asm,c --checks=3
 ```
 
 The command above will generate C and ASM code for the `mnist.onnx` model in the `output` folder.
@@ -65,5 +64,5 @@ Clone and install dependencies with `pipenv install`.
 To generate code from an ONNX model, run the following command inside a pipenv shell:
 
 ```sh
-python -m onnx2code --variation=asm,c mnist.onnx output_folder
+python -m onnx2code --variation=asm,c mnist.onnx output_folder --checks=3
 ```

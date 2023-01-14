@@ -59,7 +59,7 @@ class TensorInfo:
         Parses a TensorProto and returns the tensor
         """
         shape = [dim for dim in initializer.dims]
-        data = onnx.numpy_helper.to_array(initializer)
+        data = onnx.numpy_helper.to_array(initializer)  # type: ignore
         assert data is not None, "data should not be None"
         assert list(data.shape) == shape, "Tensor shape and data shape should match"
         return TensorInfo(
