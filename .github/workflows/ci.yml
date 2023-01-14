@@ -51,7 +51,7 @@ jobs:
         run: pipenv install --dev
 
       - name: Run tests
-        run: pipenv run python -m pytest
+        run: pipenv run make test
 
   deploy_docker_image:
     needs: [style, test]
