@@ -28,8 +28,8 @@ from onnx2code.service import ModelService, TensorsMap
 # Make tensorflow only use 1 CPU thread
 tf.config.threading.set_inter_op_parallelism_threads(1)
 tf.config.threading.set_intra_op_parallelism_threads(1)
-tf.config.run_functions_eagerly(False)  # this line does not work 🤡
-tf.compat.v1.disable_eager_execution()
+# tf.config.run_functions_eagerly(False)  # this line does not work 🤡
+# tf.compat.v1.disable_eager_execution()
 
 
 def measure_tf(tf_model: tf.keras.Model, inputs: TensorsMap, runs: int) -> list[int]:
@@ -95,7 +95,7 @@ def measure_all(tf_model: tf.keras.Model, runs: int = 300) -> dict[str, list[flo
         return [t / 1_000_000 for t in times_in_ns[warmup_runs:]]
 
     return {
-        "tensorflow": postprocess(measure_tf(tf_model, inputs, total)),
+        # "tensorflow": postprocess(measure_tf(tf_model, inputs, total)),
         "onnxruntime": postprocess(measure_onnxruntime(model_proto, inputs, total)),
         "onnx2code": postprocess(measure_onnx2code(model_result, inputs, total)),
     }
