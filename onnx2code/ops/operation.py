@@ -63,9 +63,9 @@ class OpCall:
     def signature(self) -> str:
         params = []
         for i in range(len(self.inputs)):
-            params.append(f"const float* {self.input_names[i]}")
+            params.append(f"const float* restrict {self.input_names[i]}")
         for i in range(len(self.outputs)):
-            params.append(f"float* {self.output_names[i]}")
+            params.append(f"float* restrict {self.output_names[i]}")
 
         return f"void {self.fn_name()}({', '.join(params)})"
 
@@ -114,10 +114,15 @@ class Operation(ABC):
         pass
 
     @classmethod
-    def variant(cls, name: str) -> Callable[[type["Operation"]], type["Operation"]]:
+    def variant(
+        cls, name: str | list[str]
+    ) -> Callable[[type["Operation"]], type["Operation"]]:
+        names = [name] if isinstance(name, str) else name
+
         def decorator(newcls: type[Operation]) -> type[Operation]:
             for node_type in newcls.node_types:
-                cls._registry[node_type][name] = newcls
+                for name in names:
+                    cls._registry[node_type][name] = newcls
 
             return newcls
 
