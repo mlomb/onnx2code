@@ -1,10 +1,10 @@
-#include <unistd.h>
+#include <assert.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <fcntl.h>
+#include <unistd.h>
 
 #include "model.h"
 
@@ -20,18 +20,18 @@ void* map_shared_memory(const char* name) {
 
     void* shared = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     assert(shared != MAP_FAILED);
-    
+
     return shared;
 }
 
 void* read_file(const char* filename) {
-    FILE *fp = fopen(filename, "rb");
+    FILE* fp = fopen(filename, "rb");
     assert(fp != NULL);
 
     fseek(fp, 0, SEEK_END);
     long size = ftell(fp);
     fseek(fp, 0, SEEK_SET);
-    
+
     void* buffer = malloc(size);
 
     fread(buffer, sizeof(char), size, fp);
@@ -40,12 +40,12 @@ void* read_file(const char* filename) {
     return buffer;
 }
 
-int main(int argc, char **argv) {
-    const float* weights = (const float*) read_file(argv[1]);
-    float *inputs = (float*) map_shared_memory("/o2c-inputs");
-    float *outputs = (float*) map_shared_memory("/o2c-outputs");
+int main(int argc, char** argv) {
+    const float* weights = (const float*)read_file(argv[1]);
+    float* inputs = (float*)map_shared_memory("/o2c-inputs");
+    float* outputs = (float*)map_shared_memory("/o2c-outputs");
 
-    while(1) {
+    while (1) {
         // wait for data
         char signal;
         read(STDIN_FILENO, &signal, 1);

@@ -104,6 +104,8 @@ class ModelService:
                 temp_dir.__str__(),
                 "-lrt",  # for shm
                 "-lm",  # for math
+                "-march=native",
+                "-mtune=native",
                 "-O3",
                 "-std=c99",
             ]
