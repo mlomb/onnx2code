@@ -1,6 +1,7 @@
-from typing import Iterable
-from onnx2code.util import get_attribute
 import subprocess
+from typing import Iterable
+
+from onnx2code.util import get_attribute
 
 from .operation import OpCall, Operation, OpImpl
 

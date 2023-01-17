@@ -19,8 +19,8 @@ import numpy as np
 import onnx
 import onnxruntime
 import tensorflow as tf
-from tqdm import tqdm
 import tf2onnx
+from tqdm import tqdm
 
 from onnx2code.generator import Generator
 from onnx2code.result import ModelResult

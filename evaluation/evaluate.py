@@ -1,11 +1,8 @@
-from measure import measure_all
-
-import tensorflow as tf
-
 import keras
-from keras import layers
-
 import matplotlib.pyplot as plt
+import tensorflow as tf
+from keras import layers
+from measure import measure_all
 
 # Custom MNIST-like model
 input = tf.keras.Input([4096 * 64])
