@@ -183,6 +183,11 @@ class Generator:
     def _gen_c_source(self) -> str:
         source = "#include <math.h>" + "\n" * 2
 
+        # auxiliary functions
+        aux_functions = set().union(*(impl.aux_functions for impl in self.impls.keys()))
+
+        source += "\n".join(aux_functions) + "\n" * 2
+
         # define ASM functions in C
         for impl, call in self.impls.items():
             if impl.lang == "asm":

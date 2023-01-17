@@ -1,4 +1,5 @@
 from onnx2code.util import get_attribute
+import subprocess
 
 from .operation import OpCall, Operation, OpImpl
 
@@ -81,3 +82,54 @@ class GEMMC(GEMM):
         """
 
         return OpImpl(lang="c", source=source)
+
+
+LIBXSMM_PATH = ""  # Placeholder for libxsmm path
+
+
+@GEMM.variant(["asm", "libxsmm"])
+class GEMMAsm(GEMM):
+    def impl(self) -> OpImpl:
+        raise NotImplementedError("libxsmm not implemented")
+
+        N, M, K = self.N, self.M, self.K
+
+        aux_fn_name = f"libxsmm_GEMM_{N}_{M}_{K}"
+
+        libxsmm_generator_process = subprocess.run(
+            [
+                LIBXSMM_PATH,
+                # matrix type
+                "dense",
+                # output file name
+                "/dev/stdout",
+                # function name
+                aux_fn_name,
+                # matrix size
+                str(K),
+                str(N),
+                str(M),
+                # lda, ldb, ldc
+                str(K),
+                str(M),
+                str(K),
+                # alpha beta
+                # C := alpha*A*B + beta*C
+                "1",
+                "0",
+                # 0: unaligned A, C
+                "0",
+                "0",
+                # arch
+                "hsw",  # haswell, targets AVX2
+                # prefetch
+                "nopf",  # no prefetch
+                # precision
+                "SP",  # single precision (f32)
+            ],
+            capture_output=True,
+        )
+
+        # TODO: read output and add implementation calling libxsmm function
+
+        return OpImpl(lang="c", source="")

@@ -80,6 +80,7 @@ class OpCall:
 class OpImpl:
     lang: Literal["c", "asm"]
     source: str | tuple[str, ...]
+    aux_functions: frozenset[str] = frozenset()
 
     def full_source(self) -> str:
         code = self.source if isinstance(self.source, str) else "\n".join(self.source)
