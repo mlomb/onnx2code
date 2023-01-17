@@ -46,7 +46,7 @@ class Generator:
 
         self.model_proto = model_proto
         self.tensors = {tensor.name: tensor for tensor in parse_tensors(model_proto)}
-        self.variations = variations + ["asm", "c"]
+        self.variations = variations + ["c", "asm"]
 
         self.impls: dict[OpImpl, OpCall] = {}
         self.calls: list[OpCall] = []

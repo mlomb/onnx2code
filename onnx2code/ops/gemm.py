@@ -85,17 +85,11 @@ class GEMMC(GEMM):
         return OpImpl(lang="c", source=source)
 
 
-LIBXSMM_PATH = "/home/sponja/Temp/libxsmm/bin/libxsmm_gemm_generator"
+LIBXSMM_PATH = ""
 
 
 @GEMM.variant(["asm", "libxsmm"])
 class GEMMAsm(GEMM):
-    def parse(self) -> None:
-        super().parse()
-
-        if self.hasC:
-            raise NotImplementedError("hasC not supported")
-
     def impl(self) -> OpImpl:
         N, M, K = self.N, self.M, self.K
 
@@ -156,6 +150,14 @@ class GEMMAsm(GEMM):
         # and we use onnx's row-major order
         source = f"""
         {aux_fn_name}(B, A, OUT);
-        """
+        """ + (
+            f"""
+            for(int i = 0; i < {N * K}; i++) {{
+                OUT[i] += C[i];
+            }}
+            """
+            if self.hasC
+            else ""
+        )
 
         return OpImpl(lang="c", source=source, aux_functions=frozenset([aux_fn]))
