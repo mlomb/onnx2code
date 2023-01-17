@@ -19,6 +19,7 @@ import numpy as np
 import onnx
 import onnxruntime
 import tensorflow as tf
+from tqdm import tqdm
 import tf2onnx
 
 from onnx2code.generator import Generator
@@ -50,7 +51,7 @@ def measure_onnxruntime(
     times = []
     ort_sess = onnxruntime.InferenceSession(model_proto.SerializeToString())
 
-    for _ in range(runs):
+    for _ in tqdm(range(runs), desc="onnxruntime"):
         start = perf_counter_ns()
         ort_sess.run(None, inputs)
         end = perf_counter_ns()
@@ -65,7 +66,7 @@ def measure_onnx2code(
     times = []
 
     with ModelService(model_result) as service:
-        for _ in range(runs):
+        for _ in tqdm(range(runs), desc="onnx2code"):
             start = perf_counter_ns()
             service.inference(inputs)
             end = perf_counter_ns()
