@@ -1,3 +1,4 @@
+from typing import Iterable
 from onnx2code.util import get_attribute
 import subprocess
 
@@ -84,14 +85,18 @@ class GEMMC(GEMM):
         return OpImpl(lang="c", source=source)
 
 
-LIBXSMM_PATH = ""  # Placeholder for libxsmm path
+LIBXSMM_PATH = "/home/sponja/Temp/libxsmm/bin/libxsmm_gemm_generator"
 
 
 @GEMM.variant(["asm", "libxsmm"])
 class GEMMAsm(GEMM):
-    def impl(self) -> OpImpl:
-        raise NotImplementedError("libxsmm not implemented")
+    def parse(self) -> None:
+        super().parse()
 
+        if self.hasC:
+            raise NotImplementedError("hasC not supported")
+
+    def impl(self) -> OpImpl:
         N, M, K = self.N, self.M, self.K
 
         aux_fn_name = f"libxsmm_GEMM_{N}_{M}_{K}"
@@ -128,8 +133,24 @@ class GEMMAsm(GEMM):
                 "SP",  # single precision (f32)
             ],
             capture_output=True,
+            encoding="utf-8",
         )
 
-        # TODO: read output and add implementation calling libxsmm function
+        if libxsmm_generator_process.returncode != 0:
+            raise RuntimeError(f"libxsmm_generator: {libxsmm_generator_process.stderr}")
 
-        return OpImpl(lang="c", source="")
+        lines: Iterable[str] = libxsmm_generator_process.stdout.splitlines()
+
+        # Filter out the flops line
+        lines = filter(
+            lambda l: not (l.startswith("libxsmm_num_total_flops") or l == ""),
+            lines,
+        )
+
+        aux_fn = "\n".join(lines)
+
+        source = f"""
+        {aux_fn_name}(A, B, OUT);
+        """
+
+        return OpImpl(lang="c", source=source, aux_functions=frozenset([aux_fn]))

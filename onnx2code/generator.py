@@ -184,7 +184,7 @@ class Generator:
         source = "#include <math.h>" + "\n" * 2
 
         # auxiliary functions
-        aux_functions = set().union(*(impl.aux_functions for impl in self.impls.keys()))
+        aux_functions = set[str]().union(*(impl.aux_functions for impl in self.impls.keys()))
 
         source += "\n".join(aux_functions) + "\n" * 2
 
