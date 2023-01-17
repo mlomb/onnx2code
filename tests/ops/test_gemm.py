@@ -4,8 +4,8 @@ import tensorflow as tf
 from ..util import check_keras
 
 
-@pytest.mark.parametrize("shape", [[1], [2, 3], [4, 5, 6]])
-@pytest.mark.parametrize("units", [1, 10, 100], ids=lambda x: f"{x}_units")
+@pytest.mark.parametrize("shape", [[1], [2, 2], [2, 3], [4, 5, 6]])
+@pytest.mark.parametrize("units", [1, 2, 10, 100], ids=lambda x: f"{x}_units")
 @pytest.mark.parametrize("use_bias", [False, True], ids=["no_bias", "bias"])
 def test_dense(shape: list[int], units: int, use_bias: bool) -> None:
     input = tf.keras.Input(shape)

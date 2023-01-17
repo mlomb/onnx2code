@@ -85,7 +85,7 @@ class GEMMC(GEMM):
         return OpImpl(lang="c", source=source)
 
 
-LIBXSMM_PATH = ""
+LIBXSMM_PATH = "/home/sponja/Temp/libxsmm/bin/libxsmm_gemm_generator"
 
 
 @GEMM.variant(["asm", "libxsmm"])
@@ -101,37 +101,40 @@ class GEMMAsm(GEMM):
 
         aux_fn_name = f"libxsmm_GEMM_{N}_{M}_{K}"
 
+        # Reference: https://scalable.uni-jena.de/opt/hpc/chapters/assignment_small_gemms.html
+        generator_args = [
+            LIBXSMM_PATH,
+            # matrix type
+            "dense",
+            # output file name
+            "/dev/stdout",
+            # function name
+            aux_fn_name,
+            # matrix size
+            str(K),
+            str(N),
+            str(M),
+            # lda, ldb, ldc
+            str(K),
+            str(M),
+            str(K),
+            # alpha beta
+            # C := alpha*A*B + beta*C
+            "1",
+            "0",
+            # 0: unaligned A, C
+            "0",
+            "0",
+            # arch
+            "hsw",  # haswell, targets AVX2
+            # prefetch
+            "nopf",  # no prefetch
+            # precision
+            "SP",  # single precision (f32)
+        ]
+
         libxsmm_generator_process = subprocess.run(
-            [
-                LIBXSMM_PATH,
-                # matrix type
-                "dense",
-                # output file name
-                "/dev/stdout",
-                # function name
-                aux_fn_name,
-                # matrix size
-                str(K),
-                str(N),
-                str(M),
-                # lda, ldb, ldc
-                str(K),
-                str(M),
-                str(K),
-                # alpha beta
-                # C := alpha*A*B + beta*C
-                "1",
-                "0",
-                # 0: unaligned A, C
-                "0",
-                "0",
-                # arch
-                "hsw",  # haswell, targets AVX2
-                # prefetch
-                "nopf",  # no prefetch
-                # precision
-                "SP",  # single precision (f32)
-            ],
+            generator_args,
             capture_output=True,
             encoding="utf-8",
         )
@@ -141,16 +144,18 @@ class GEMMAsm(GEMM):
 
         lines: Iterable[str] = libxsmm_generator_process.stdout.splitlines()
 
-        # Filter out the flops line
-        lines = filter(
-            lambda l: not (l.startswith("libxsmm_num_total_flops") or l == ""),
-            lines,
+        aux_fn = "\n".join(
+            filter(
+                # Filter out the flops line
+                lambda l: not (l.startswith("libxsmm_num_total_flops") or l == ""),
+                lines,
+            )
         )
 
-        aux_fn = "\n".join(lines)
-
+        # tensors MUST be reversed since libxsmm uses BLAS' column-major order
+        # and we use onnx's row-major order
         source = f"""
-        {aux_fn_name}(A, B, OUT);
+        {aux_fn_name}(B, A, OUT);
         """
 
         return OpImpl(lang="c", source=source, aux_functions=frozenset([aux_fn]))
