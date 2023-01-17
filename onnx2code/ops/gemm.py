@@ -85,7 +85,7 @@ class GEMMC(GEMM):
         return OpImpl(lang="c", source=source)
 
 
-LIBXSMM_PATH = "/home/sponja/Temp/libxsmm/bin/libxsmm_gemm_generator"
+LIBXSMM_PATH = ""
 
 
 @GEMM.variant(["asm", "libxsmm"])
