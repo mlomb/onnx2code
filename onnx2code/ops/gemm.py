@@ -182,37 +182,51 @@ class GEMMLoopTiling(GEMM):
     #     pass
 
     def impl(self) -> OpImpl:
-        N, M, K = self.N, self.M, self.K
+        M, K, N = self.N, self.M, self.K
 
-        if not (N == M and M == K):  # square matrices only
-            raise NotImplementedError("non square matrices not supported")
+        if self.hasC:
+            raise NotImplementedError("hasC not supported")
 
         source = f"""
-        int ib = 32, kb = 32;
-        memset(OUT, 0, {N * K} * sizeof(float));
-        for (int ii = 0; ii < {N}; ii += ib) {{
-            for (int kk = 0; kk < {K}; kk += kb) {{
-                for (int j = 0; j < {M}; j += 2) {{
-                    for (int i = ii; i < ii + ib; i += 2) {{
-                        float acc00, acc01, acc10, acc11;
-                        acc00 = acc01 = acc10 = acc11 = 0;
+        int nc = {N};
+        int mc = 32;
+        int kc = 32;
 
-                        for (int k = kk; k < kk + kb; k++) {{
-                            int a_address1 = i * {M} + k, a_address2 = (i + 1) * {M} + k;
-                            int b_address1 = k * {K} + j, b_address2 = k * {K} + j + 1;
+        int mr = 4; // numero de registros
+        int nr = 4; // numero de floats en registros SIMD
 
-                            acc00 += A[a_address1] * B[b_address1];
-                            acc01 += A[a_address1] * B[b_address2];
-                            acc10 += A[a_address2] * B[b_address1];
-                            acc11 += A[a_address2] * B[b_address2];
+        memset(OUT, 0, {M * N} * sizeof(float));
+
+        for (int jc = 0; jc < {N}; jc += nc) {{
+            for (int pc = 0; pc < {K}; pc += kc) {{
+                for (int ic = 0; ic < {M}; ic += mc) {{
+                    int _nc = min({N} - jc, nc); // evitar que se pase "matrices grandes?"
+                    int _mc = min({M} - ic, mc); // evitar que se pase el panel
+
+                    for (int jr = 0; jr < _nc; jr += nr) {{
+                        for (int ir = 0; ir < _mc; ir += mr) {{
+                            int _kc = min({K} - pc, kc); // evitar que se pase el panel
+                            int _nr = min(_nc - jr, nr); // evitar que se pase el bloque
+                            int _mr = min(_mc - ir, mr); // evitar que se pase el bloque
+
+                            // _mr x _kc x _nr
+
+                            for (int mi = ic+ir; mi < ic+ir+_mr; mi++) {{
+                                for (int ni = jc+jr; ni < jc+jr+_nr; ni++) {{
+                                    for (int ki = pc; ki < pc+_kc; ki++) {{
+                                        assert(mi < {M});
+                                        assert(ki < {K});
+                                        assert(ni < {N});
+
+                                        OUT[mi * {N} + ni] +=
+                                            A[mi * {K} + ki] *
+                                            B[ki * {N} + ni];
+                                    }}
+                                }}
+                            }}
+
+                            // --
                         }}
-
-                        int out_address1 = i * {K} + j, out_address2 = (i + 1) * {K} + j;
-
-                        OUT[out_address1] += acc00;
-                        OUT[out_address1 + 1] += acc01;
-                        OUT[out_address2] += acc10;
-                        OUT[out_address2 + 1] += acc11;
                     }}
                 }}
             }}

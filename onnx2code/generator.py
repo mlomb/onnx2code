@@ -200,7 +200,18 @@ class Generator:
         )
 
     def _gen_c_source(self) -> str:
-        source = "#include <math.h>\n#include <string.h>" + "\n" * 2
+        source = "\n".join(
+            [
+                "#include <stdio.h>",
+                "#include <assert.h>",
+                "#include <math.h>",
+                "#include <string.h>",
+                "#define min(a,b) ((a)<(b)?(a):(b))",
+                "#define max(a,b) ((a)>(b)?(a):(b))",
+                "",
+                "",
+            ]
+        )
 
         # auxiliary functions
         aux_functions = set[str]().union(
