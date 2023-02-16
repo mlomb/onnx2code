@@ -136,10 +136,13 @@ class GEMMAsm(GEMM):
                 encoding="utf-8",
             )
         except PermissionError:
-            raise RuntimeError(f"libxsmm_generator not found at '{LIBXSMM_PATH}'")
+            raise RuntimeError(f"libxsmm not found at '{LIBXSMM_PATH}'")
 
-        if libxsmm_generator_process.returncode != 0:
-            raise RuntimeError(f"libxsmm_generator: {libxsmm_generator_process.stderr}")
+        if (
+            libxsmm_generator_process.returncode != 0
+            or libxsmm_generator_process.stderr != ""
+        ):
+            raise RuntimeError(f"libxsmm: {libxsmm_generator_process.stderr}")
 
         lines: Iterable[str] = libxsmm_generator_process.stdout.splitlines()
 
@@ -152,6 +155,9 @@ class GEMMAsm(GEMM):
                 lines,
             )
         )
+
+        if aux_fn == "":
+            raise RuntimeError("libxsmm: no output")
 
         # tensors MUST be reversed since libxsmm uses BLAS' column-major order
         # and we use onnx's row-major order
