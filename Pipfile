@@ -14,6 +14,7 @@ tf2onnx = ">=1.12.1"
 matplotlib = "*"
 pandas = "*"
 black = "==22.10.0"
+tqdm = "*"
 
 [dev-packages]
 mypy = "*"
@@ -21,7 +22,6 @@ flake8 = "*"
 black = "*"
 ipykernel = "*"
 isort = "*"
-tqdm = "*"
 
 [requires]
 python_version = "3.10"
