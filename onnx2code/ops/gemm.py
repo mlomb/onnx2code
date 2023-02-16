@@ -168,27 +168,22 @@ class GEMMAsm(GEMM):
 
 @GEMM.variant(["c", "loop-tiling"])
 class GEMMLoopTiling(GEMM):
+    # def kernel(n: int, m: int) -> str:
+    #     pass
+
     def impl(self) -> OpImpl:
         N, M, K = self.N, self.M, self.K
 
         source = f"""
         int ib = 32, kb = 32;
+        memset(OUT, 0, {N * K} * sizeof(float));
         for (int ii = 0; ii < {N}; ii += ib) {{
             for (int kk = 0; kk < {K}; kk += kb) {{
                 for (int j = 0; j < {M}; j += 2) {{
                     for (int i = ii; i < ii + ib; i += 2) {{
                         float acc00, acc01, acc10, acc11;
+                        acc00 = acc01 = acc10 = acc11 = 0;
 
-                        int out_address1 = i * {K} + j, out_address2 = (i + 1) * {K} + j;
-
-                        if (kk == 0)
-                            acc00 = acc01 = acc10 = acc11 = 0;
-                        else {{
-                            acc00 = OUT[out_address1];
-                            acc01 = OUT[out_address1 + 1];
-                            acc10 = OUT[out_address2];
-                            acc11 = OUT[out_address2 + 1];
-                        }}
                         for (int k = kk; k < kk + kb; k++) {{
                             int a_address1 = i * {M} + k, a_address2 = (i + 1) * {M} + k;
                             int b_address1 = k * {K} + j, b_address2 = k * {K} + j + 1;
@@ -198,10 +193,13 @@ class GEMMLoopTiling(GEMM):
                             acc10 += A[a_address2] * B[b_address1];
                             acc11 += A[a_address2] * B[b_address2];
                         }}
-                        OUT[out_address1] = acc00;
-                        OUT[out_address1 + 1] = acc01;
-                        OUT[out_address2] = acc10;
-                        OUT[out_address2 + 1] = acc11;
+
+                        int out_address1 = i * {K} + j, out_address2 = (i + 1) * {K} + j;
+
+                        OUT[out_address1] += acc00;
+                        OUT[out_address1 + 1] += acc01;
+                        OUT[out_address2] += acc10;
+                        OUT[out_address2 + 1] += acc11;
                     }}
                 }}
             }}

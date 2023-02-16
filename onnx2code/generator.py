@@ -181,7 +181,7 @@ class Generator:
         )
 
     def _gen_c_source(self) -> str:
-        source = "#include <math.h>" + "\n" * 2
+        source = "#include <math.h>\n#include <string.h>" + "\n" * 2
 
         # auxiliary functions
         aux_functions = set[str]().union(

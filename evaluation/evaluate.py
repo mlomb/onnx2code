@@ -18,7 +18,7 @@ model = keras.Sequential(
 )
 
 # Measure models
-data = measure_all(model, variations=["c", "loop-tiling", "libxsmm"])
+data = measure_all(model, variations=["gemm-naive", "loop-tiling", "libxsmm"])
 
 # Plot results
 plt.boxplot(data.values(), labels=data.keys())

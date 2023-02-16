@@ -36,7 +36,7 @@ tf.config.threading.set_intra_op_parallelism_threads(1)
 def measure_tf(tf_model: tf.keras.Model, inputs: TensorsMap, runs: int) -> list[int]:
     times = []
 
-    for _ in range(runs):
+    for _ in tqdm(range(runs), desc="tensorflow"):
         start = perf_counter_ns()
         tf_model.predict(inputs, verbose=0)
         end = perf_counter_ns()
@@ -61,12 +61,15 @@ def measure_onnxruntime(
 
 
 def measure_onnx2code(
-    model_result: ModelResult, inputs: TensorsMap, runs: int
+    model_result: ModelResult, inputs: TensorsMap, runs: int, variation_name: str = ""
 ) -> list[int]:
     times = []
 
     with ModelService(model_result) as service:
-        for _ in tqdm(range(runs), desc="onnx2code"):
+        for _ in tqdm(
+            range(runs),
+            desc="onnx2code" if not variation_name else f"onnx2code-{variation_name}",
+        ):
             start = perf_counter_ns()
             service.inference(inputs)
             end = perf_counter_ns()
@@ -102,10 +105,10 @@ def measure_all(
         }
 
         results[f"onnx2code-{variation}"] = postprocess(
-            measure_onnx2code(model_variation, inputs, total)
+            measure_onnx2code(model_variation, inputs, total, variation)
         )
 
     return results | {
-        # "tensorflow": postprocess(measure_tf(tf_model, inputs, total)),
+        "tensorflow": postprocess(measure_tf(tf_model, inputs, total)),
         "onnxruntime": postprocess(measure_onnxruntime(model_proto, inputs, total)),
     }
