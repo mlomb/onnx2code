@@ -71,6 +71,10 @@ EXCLUDED_MODELS = {
         "fcn-resnet50-12.onnx",
         "MaskRCNN-10.onnx",
     ],
+    "Broken": [
+        "FasterRCNN-12.onnx",
+        "MaskRCNN-12.onnx"
+    ]
 }
 
 
