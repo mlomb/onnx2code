@@ -64,7 +64,7 @@ class GEMM(Operation):
         )
 
 
-@GEMM.variant("c")
+@GEMM.variant(["c", "gemm-naive"])
 class GEMMC(GEMM):
     def impl(self) -> OpImpl:
         N, M, K = self.N, self.M, self.K
@@ -142,7 +142,9 @@ class GEMMAsm(GEMM):
         aux_fn = "\n".join(
             filter(
                 # Filter out the flops line
-                lambda l: not (l.startswith("libxsmm_num_total_flops") or l == ""),
+                lambda line: not (
+                    line.startswith("libxsmm_num_total_flops") or line == ""
+                ),
                 lines,
             )
         )
@@ -162,3 +164,51 @@ class GEMMAsm(GEMM):
         )
 
         return OpImpl(lang="c", source=source, aux_functions=frozenset([aux_fn]))
+
+
+@GEMM.variant(["c", "loop-tiling"])
+class GEMMLoopTiling(GEMM):
+    def impl(self) -> OpImpl:
+        N, M, K = self.N, self.M, self.K
+
+        source = f"""
+        int ib = 32, kb = 32;
+        for (int ii = 0; ii < {N}; ii += ib) {{
+            for (int kk = 0; kk < {K}; kk += kb) {{
+                for (int j = 0; j < {M}; j += 2) {{
+                    for (int i = ii; i < ii + ib; i += 2) {{
+                        float acc00, acc01, acc10, acc11;
+
+                        int out_address1 = i * {K} + j, out_address2 = (i + 1) * {K} + j;
+
+                        if (kk == 0)
+                            acc00 = acc01 = acc10 = acc11 = 0;
+                        else {{
+                            acc00 = OUT[out_address1];
+                            acc01 = OUT[out_address1 + 1];
+                            acc10 = OUT[out_address2];
+                            acc11 = OUT[out_address2 + 1];
+                        }}
+                        for (int k = kk; k < kk + kb; k++) {{
+                            int a_address1 = i * {M} + k, a_address2 = (i + 1) * {M} + k;
+                            int b_address1 = k * {K} + j, b_address2 = k * {K} + j + 1;
+
+                            acc00 += A[a_address1] * B[b_address1];
+                            acc01 += A[a_address1] * B[b_address2];
+                            acc10 += A[a_address2] * B[b_address1];
+                            acc11 += A[a_address2] * B[b_address2];
+                        }}
+                        OUT[out_address1] = acc00;
+                        OUT[out_address1 + 1] = acc01;
+                        OUT[out_address2] = acc10;
+                        OUT[out_address2 + 1] = acc11;
+                    }}
+                }}
+            }}
+        }}
+        """
+
+        return OpImpl(
+            lang="c",
+            source=source,
+        )

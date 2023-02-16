@@ -75,28 +75,37 @@ def measure_onnx2code(
     return times
 
 
-def measure_all(tf_model: tf.keras.Model, runs: int = 300) -> dict[str, list[float]]:
+def measure_all(
+    tf_model: tf.keras.Model, runs: int = 300, variations: list[str] = []
+) -> dict[str, list[float]]:
     """
     Measure the inference time of the given model in tf, onnxruntime and onnx2code.
 
     Time in milliseconds.
     """
     model_proto, _ = tf2onnx.convert.from_keras(tf_model)
-    model_result = Generator(model_proto).generate()
-
-    inputs = {
-        name: np.random.random_sample(shape).astype(np.float32) * 2 - 1
-        for name, shape in model_result.input_shapes.items()
-    }
-
-    warmup_runs = 100
-    total = runs + warmup_runs
 
     def postprocess(times_in_ns: list[int]) -> list[float]:
         return [t / 1_000_000 for t in times_in_ns[warmup_runs:]]
 
-    return {
+    warmup_runs = 100
+    total = runs + warmup_runs
+
+    results: dict[str, list[float]] = {}
+
+    for variation in variations:
+        model_variation = Generator(model_proto, variations=[variation]).generate()
+
+        inputs = {
+            name: np.random.random_sample(shape).astype(np.float32) * 2 - 1
+            for name, shape in model_variation.input_shapes.items()
+        }
+
+        results[f"onnx2code-{variation}"] = postprocess(
+            measure_onnx2code(model_variation, inputs, total)
+        )
+
+    return results | {
         # "tensorflow": postprocess(measure_tf(tf_model, inputs, total)),
         "onnxruntime": postprocess(measure_onnxruntime(model_proto, inputs, total)),
-        "onnx2code": postprocess(measure_onnx2code(model_result, inputs, total)),
     }

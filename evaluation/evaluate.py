@@ -8,21 +8,17 @@ from measure import measure_all
 input = tf.keras.Input([4096 * 64])
 out = tf.keras.layers.Lambda(lambda x: x)(input)
 
-num_classes = 10
-input_shape = (28, 28, 1)
+input_shape = (256, 256)
 
 model = keras.Sequential(
     [
         keras.Input(shape=input_shape),
-        layers.Dense(100, activation="relu"),
-        layers.Dense(100, activation="relu"),
-        layers.Dense(100, activation="relu"),
-        layers.Dense(num_classes, activation="softmax"),
+        layers.Dense(256, activation="relu"),
     ]
 )
 
 # Measure models
-data = measure_all(model)
+data = measure_all(model, variations=["c", "loop-tiling", "libxsmm"])
 
 # Plot results
 plt.boxplot(data.values(), labels=data.keys())
