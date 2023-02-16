@@ -91,13 +91,31 @@ class Generator:
 
                 continue
 
-            op = Operation.get(node.op_type, self.variations)(
-                node,
-                [self.tensors[name] for name in node.input],
-                [self.tensors[name] for name in node.output],
-            )
-            impl = op.impl()
-            call = op.call()
+            variants = Operation.get(node.op_type, self.variations)
+
+            impl: (OpImpl | None) = None
+            call: (OpCall | None) = None
+            ex: (Exception | None) = None
+
+            # we try all the variants we have available, in the order specified
+            # if one throws NotImplemented, we try the next one
+            for var in variants:
+                try:
+                    op = var(
+                        node,
+                        [self.tensors[name] for name in node.input],
+                        [self.tensors[name] for name in node.output],
+                    )
+                    impl = op.impl()
+                    call = op.call()
+                except NotImplementedError as _ex:
+                    # keep first
+                    if ex is None:
+                        ex = _ex
+
+            if impl is None or call is None:
+                assert ex is not None
+                raise ex
 
             if call is not None and impl is not None:
                 if impl in self.impls:

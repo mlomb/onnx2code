@@ -130,12 +130,17 @@ class Operation(ABC):
         return decorator
 
     @staticmethod
-    def get(node_type: str, variant: list[str]) -> type["Operation"]:
+    def get(node_type: str, variant: list[str]) -> list[type["Operation"]]:
         if node_type not in Operation._registry:
             raise NotImplementedError(f"Operation {node_type} not implemented")
 
+        variants = set()
+
         for variant_name in variant:
             if variant_name in Operation._registry[node_type]:
-                return Operation._registry[node_type][variant_name]
+                variants.add(Operation._registry[node_type][variant_name])
 
-        raise ValueError(f"No valid variant found for {node_type}")
+        if len(variants) == 0:
+            raise ValueError(f"No valid variant found for {node_type}")
+        else:
+            return list(variants)
