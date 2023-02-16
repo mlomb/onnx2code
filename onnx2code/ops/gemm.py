@@ -64,7 +64,7 @@ class GEMM(Operation):
         )
 
 
-@GEMM.variant(["c", "gemm-naive"])
+@GEMM.variant(["c", "gemm-naive"], priority=2)
 class GEMMC(GEMM):
     def impl(self) -> OpImpl:
         N, M, K = self.N, self.M, self.K
@@ -90,7 +90,7 @@ class GEMMC(GEMM):
 LIBXSMM_PATH = "libxsmm_gemm_generator"
 
 
-@GEMM.variant(["asm", "libxsmm"])
+@GEMM.variant(["asm", "libxsmm"], priority=0)
 class GEMMAsm(GEMM):
     def impl(self) -> OpImpl:
         N, M, K = self.N, self.M, self.K
@@ -176,7 +176,7 @@ class GEMMAsm(GEMM):
         return OpImpl(lang="c", source=source, aux_functions=frozenset([aux_fn]))
 
 
-@GEMM.variant(["c", "loop-tiling"])
+@GEMM.variant(["c", "loop-tiling"], priority=1)
 class GEMMLoopTiling(GEMM):
     # def kernel(n: int, m: int) -> str:
     #     pass

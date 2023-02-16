@@ -28,7 +28,7 @@ class Identity(Operation):
         )
 
 
-@Identity.variant("c")
+@Identity.variant("c", priority=1)
 class IdentityC(Identity):
     def impl(self) -> OpImpl:
         source = f"""
@@ -40,7 +40,7 @@ class IdentityC(Identity):
         return OpImpl(lang="c", source=source)
 
 
-@Identity.variant("asm")
+@Identity.variant("asm", priority=0)
 class IdentityASM(Identity):
     def impl(self) -> OpImpl:
         source = (

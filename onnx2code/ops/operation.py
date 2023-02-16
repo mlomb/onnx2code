@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass
 from textwrap import dedent
-from typing import Callable, Literal
+from typing import Any, Callable, Literal
 
 import onnx
 
@@ -87,9 +87,19 @@ class OpImpl:
         return dedent(code).strip().strip("\n")
 
 
+@dataclass(frozen=True)
+class RegistryEntry:
+    variant_tags: list[str]
+    priority: int
+    klass: type["Operation"]
+
+    def __lt__(self, other: Any) -> bool:
+        return self.priority < other.priority  # type: ignore
+
+
 class Operation(ABC):
     node_types: set[str]
-    _registry: defaultdict[str, dict[str, type["Operation"]]] = defaultdict(dict)
+    _registry: defaultdict[str, list[RegistryEntry]] = defaultdict(list)
 
     def __init__(
         self,
@@ -116,29 +126,33 @@ class Operation(ABC):
 
     @classmethod
     def variant(
-        cls, name: str | list[str]
+        cls, var: str | list[str], priority: int = 0
     ) -> Callable[[type["Operation"]], type["Operation"]]:
-        names = [name] if isinstance(name, str) else name
+        vars = [var] if isinstance(var, str) else var
 
         def decorator(newcls: type[Operation]) -> type[Operation]:
             for node_type in newcls.node_types:
-                for name in names:
-                    cls._registry[node_type][name] = newcls
+                cls._registry[node_type].append(
+                    RegistryEntry(variant_tags=vars, priority=priority, klass=newcls)
+                )
+                # always keep sorted
+                cls._registry[node_type].sort()
 
             return newcls
 
         return decorator
 
     @staticmethod
-    def get(node_type: str, variant: list[str]) -> list[type["Operation"]]:
+    def get(node_type: str, variant_order: list[str]) -> list[type["Operation"]]:
         if node_type not in Operation._registry:
             raise NotImplementedError(f"Operation {node_type} not implemented")
 
         variants = []
 
-        for variant_name in variant:
-            if variant_name in Operation._registry[node_type]:
-                variants.append(Operation._registry[node_type][variant_name])
+        for variant_tag in variant_order:
+            for entry in Operation._registry[node_type]:
+                if variant_tag in entry.variant_tags:
+                    variants.append(entry.klass)
 
         if len(variants) == 0:
             raise ValueError(f"No valid variant found for {node_type}")
