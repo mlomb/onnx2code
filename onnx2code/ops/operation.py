@@ -134,13 +134,13 @@ class Operation(ABC):
         if node_type not in Operation._registry:
             raise NotImplementedError(f"Operation {node_type} not implemented")
 
-        variants = set()
+        variants = []
 
         for variant_name in variant:
             if variant_name in Operation._registry[node_type]:
-                variants.add(Operation._registry[node_type][variant_name])
+                variants.append(Operation._registry[node_type][variant_name])
 
         if len(variants) == 0:
             raise ValueError(f"No valid variant found for {node_type}")
         else:
-            return list(variants)
+            return list(dict.fromkeys(variants))

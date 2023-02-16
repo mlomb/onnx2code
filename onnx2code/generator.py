@@ -108,6 +108,7 @@ class Generator:
                     )
                     impl = op.impl()
                     call = op.call()
+                    break
                 except NotImplementedError as _ex:
                     # keep first
                     if ex is None:
