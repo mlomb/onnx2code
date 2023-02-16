@@ -184,6 +184,9 @@ class GEMMLoopTiling(GEMM):
     def impl(self) -> OpImpl:
         N, M, K = self.N, self.M, self.K
 
+        if not (N == M and M == K):  # square matrices only
+            raise NotImplementedError("non square matrices not supported")
+
         source = f"""
         int ib = 32, kb = 32;
         memset(OUT, 0, {N * K} * sizeof(float));
