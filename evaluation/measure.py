@@ -1,17 +1,4 @@
-import os
-import sys
-
-# Silence TF
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
-# Do not use GPU
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-
-# Make onnxruntime only use 1 CPU thread
-os.environ["OMP_NUM_THREADS"] = "1"
-os.environ["MKL_NUM_THREADS"] = "1"
-os.environ["OPENBLAS_NUM_THREADS"] = "1"
-
-sys.path.append("../")
+import setup  # noqa # isort:skip
 
 from time import perf_counter_ns
 
@@ -26,19 +13,16 @@ from onnx2code.generator import Generator
 from onnx2code.result import ModelResult
 from onnx2code.service import ModelService, TensorsMap
 
-# Make tensorflow only use 1 CPU thread
-tf.config.threading.set_inter_op_parallelism_threads(1)
-tf.config.threading.set_intra_op_parallelism_threads(1)
-# tf.config.run_functions_eagerly(False)  # this line does not work 🤡
-# tf.compat.v1.disable_eager_execution()
-
 
 def measure_tf(tf_model: tf.keras.Model, inputs: TensorsMap, runs: int) -> list[int]:
     times = []
 
+    # ⚠️ Make sure to use graph execution and NOT eager execution
+    graph_model = tf.function(tf_model)
+
     for _ in tqdm(range(runs), desc="tensorflow"):
         start = perf_counter_ns()
-        tf_model.predict(inputs, verbose=0)
+        graph_model(inputs)
         end = perf_counter_ns()
         times.append(end - start)
 

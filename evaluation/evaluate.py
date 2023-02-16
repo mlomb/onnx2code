@@ -1,3 +1,5 @@
+import setup  # noqa # isort:skip
+
 import keras
 import matplotlib.pyplot as plt
 import tensorflow as tf
