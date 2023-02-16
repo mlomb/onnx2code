@@ -86,7 +86,8 @@ class GEMMC(GEMM):
         return OpImpl(lang="c", source=source)
 
 
-LIBXSMM_PATH = ""
+# Make sure this executable is in your PATH
+LIBXSMM_PATH = "libxsmm_gemm_generator"
 
 
 @GEMM.variant(["asm", "libxsmm"])
@@ -128,11 +129,14 @@ class GEMMAsm(GEMM):
             "SP",  # single precision (f32)
         ]
 
-        libxsmm_generator_process = subprocess.run(
-            generator_args,
-            capture_output=True,
-            encoding="utf-8",
-        )
+        try:
+            libxsmm_generator_process = subprocess.run(
+                generator_args,
+                capture_output=True,
+                encoding="utf-8",
+            )
+        except PermissionError:
+            raise RuntimeError(f"libxsmm_generator not found at '{LIBXSMM_PATH}'")
 
         if libxsmm_generator_process.returncode != 0:
             raise RuntimeError(f"libxsmm_generator: {libxsmm_generator_process.stderr}")
