@@ -116,6 +116,7 @@ class ModelService:
                     "-Wall",
                     "-Werror",
                     "-Wno-unused-result",
+                    "-Wno-unused-but-set-variable",
                 ]
                 if debug
                 else []

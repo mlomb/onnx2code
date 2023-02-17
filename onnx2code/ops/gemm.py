@@ -187,40 +187,40 @@ class GEMMLoopTiling(GEMM):
         if self.hasC:
             raise NotImplementedError("hasC not supported")
 
+        nc = N  # Columnas de panel de B
+        kc = 32  # Filas de panel de B
+        mc = 32  # Filas de bloque de A
+
+        mr = 4  # Filas de microkernel
+        nr = 4  # Columnas de microkernel
+
         source = f"""
-        int nc = {N};
-        int mc = 32;
-        int kc = 32;
-
-        int mr = 4; // numero de registros
-        int nr = 4; // numero de floats en registros SIMD
-
         memset(OUT, 0, {M * N} * sizeof(float));
 
-        for (int jc = 0; jc < {N}; jc += nc) {{
-            for (int pc = 0; pc < {K}; pc += kc) {{
-                for (int ic = 0; ic < {M}; ic += mc) {{
-                    int _nc = min({N} - jc, nc); // evitar que se pase "matrices grandes?"
-                    int _mc = min({M} - ic, mc); // evitar que se pase el panel
+        float B_panel[{nc * kc}];
 
-                    for (int jr = 0; jr < _nc; jr += nr) {{
-                        for (int ir = 0; ir < _mc; ir += mr) {{
-                            int _kc = min({K} - pc, kc); // evitar que se pase el panel
-                            int _nr = min(_nc - jr, nr); // evitar que se pase el bloque
-                            int _mr = min(_mc - ir, mr); // evitar que se pase el bloque
+        for (int jc = 0; jc < {N}; jc += {nc}) {{
+            for (int pc = 0; pc < {K}; pc += {kc}) {{
+                {pack_B('B_panel', 'pc', 'jc', N, kc, nc)}
+
+                for (int ic = 0; ic < {M}; ic += {mc}) {{
+                    int _nc = min({N} - jc, {nc}); // evitar que se pase "matrices grandes?"
+                    int _mc = min({M} - ic, {mc}); // evitar que se pase el panel
+
+                    for (int jr = 0; jr < _nc; jr += {nr}) {{
+                        for (int ir = 0; ir < _mc; ir += {mr}) {{
+                            int _kc = min({K} - pc, {kc}); // evitar que se pase el panel
+                            int _nr = min(_nc - jr, {nr}); // evitar que se pase el bloque
+                            int _mr = min(_mc - ir, {mr}); // evitar que se pase el bloque
 
                             // _mr x _kc x _nr
 
                             for (int mi = ic+ir; mi < ic+ir+_mr; mi++) {{
-                                for (int ni = jc+jr; ni < jc+jr+_nr; ni++) {{
-                                    for (int ki = pc; ki < pc+_kc; ki++) {{
-                                        assert(mi < {M});
-                                        assert(ki < {K});
-                                        assert(ni < {N});
-
-                                        OUT[mi * {N} + ni] +=
-                                            A[mi * {K} + ki] *
-                                            B[ki * {N} + ni];
+                                for (int ni = jr; ni < jr+_nr; ni++) {{
+                                    for (int ki = 0; ki < _kc; ki++) {{
+                                        OUT[mi * {N} + ni + jc] +=
+                                            A[mi * {K} + ki + pc] *
+                                            B_panel[ki * {nr} + ni];
                                     }}
                                 }}
                             }}
@@ -237,3 +237,22 @@ class GEMMLoopTiling(GEMM):
             lang="c",
             source=source,
         )
+
+
+def pack_B(
+    buffer_var: str,
+    panel_row_var: str,
+    panel_col_var: str,
+    B_cols: int,
+    kc: int,
+    nc: int,
+) -> str:
+    return f"""
+    // B panel packing
+    for(int pack_k = 0; pack_k < {kc}; pack_k++) {{
+        for(int pack_j = 0; pack_j < {nc}; pack_j++) {{
+            {buffer_var}[pack_k * {nc} + pack_j] =
+                B[({panel_row_var} + pack_k) * {B_cols} + ({panel_col_var} + pack_j)];
+        }}
+    }}
+    """
