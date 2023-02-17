@@ -72,11 +72,11 @@ def measure_all(
     """
     model_proto, _ = tf2onnx.convert.from_keras(tf_model)
 
+    warmup_runs = int(min(100, max(5, runs * 0.1)))
+    total = runs + warmup_runs
+
     def postprocess(times_in_ns: list[int]) -> list[float]:
         return [t / 1_000_000 for t in times_in_ns[warmup_runs:]]
-
-    warmup_runs = 100
-    total = runs + warmup_runs
 
     results: dict[str, list[float]] = {}
 
