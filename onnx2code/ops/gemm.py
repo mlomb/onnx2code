@@ -198,12 +198,15 @@ class GEMMLoopTiling(GEMM):
         memset(OUT, 0, {M * N} * sizeof(float));
 
         float B_panel[{nc * kc}];
+        float A_panel[{mc * kc}];
 
         for (int jc = 0; jc < {N}; jc += {nc}) {{
             for (int pc = 0; pc < {K}; pc += {kc}) {{
-                {pack_B('B_panel', 'pc', 'jc', N, kc, nc)}
+                {pack_B('pc', 'jc', N, kc, nc)}
 
                 for (int ic = 0; ic < {M}; ic += {mc}) {{
+                    {pack_A('ic', 'pc', K, mc, kc)}
+
                     int _nc = min({N} - jc, {nc}); // evitar que se pase "matrices grandes?"
                     int _mc = min({M} - ic, {mc}); // evitar que se pase el panel
 
@@ -216,11 +219,11 @@ class GEMMLoopTiling(GEMM):
                             // _mr x _kc x _nr
 
                             for (int mi = ic+ir; mi < ic+ir+_mr; mi++) {{
-                                for (int ni = jr; ni < jr+_nr; ni++) {{
-                                    for (int ki = 0; ki < _kc; ki++) {{
-                                        OUT[mi * {N} + ni + jc] +=
-                                            A[mi * {K} + ki + pc] *
-                                            B_panel[ki * {nr} + ni];
+                                for (int ni = jc+jr; ni < jc+jr+_nr; ni++) {{
+                                    for (int ki = pc; ki < pc+_kc; ki++) {{
+                                        OUT[mi * {N} + ni] +=
+                                            A_panel[(mi-ic) * {kc} + (ki-pc)] *
+                                            B_panel[(ni-jc) * {kc} + (ki-pc)];
                                     }}
                                 }}
                             }}
@@ -240,9 +243,8 @@ class GEMMLoopTiling(GEMM):
 
 
 def pack_B(
-    buffer_var: str,
-    panel_row_var: str,
-    panel_col_var: str,
+    row_offset_var: str,
+    col_offset_var: str,
     B_cols: int,
     kc: int,
     nc: int,
@@ -250,9 +252,27 @@ def pack_B(
     return f"""
     // B panel packing
     for(int pack_k = 0; pack_k < {kc}; pack_k++) {{
-        for(int pack_j = 0; pack_j < {nc}; pack_j++) {{
-            {buffer_var}[pack_k * {nc} + pack_j] =
-                B[({panel_row_var} + pack_k) * {B_cols} + ({panel_col_var} + pack_j)];
+        for(int pack_n = 0; pack_n < {nc}; pack_n++) {{
+            B_panel[pack_n * {kc} + pack_k] =
+                B[({row_offset_var} + pack_k) * {B_cols} + ({col_offset_var} + pack_n)];
+        }}
+    }}
+    """
+
+
+def pack_A(
+    row_offset_var: str,
+    col_offset_var: str,
+    A_cols: int,
+    mc: int,
+    kc: int,
+) -> str:
+    return f"""
+    // A panel packing
+    for(int pack_m = 0; pack_m < {mc}; pack_m++) {{
+        for(int pack_k = 0; pack_k < {kc}; pack_k++) {{
+            A_panel[pack_m * {kc} + pack_k] =
+                A[({row_offset_var} + pack_m) * {A_cols} + ({col_offset_var} + pack_k)];
         }}
     }}
     """
