@@ -2,7 +2,7 @@
 
 template <int KC, int NR, int StrideCol, int StrideRow>
 inline void gpackB_block(
-    float* __restrict__ B,
+    const float* __restrict__ B,
     float* __restrict__ B_panel  // kc x nr
 ) {
     for (int r = 0; r < KC; r++) {
@@ -19,7 +19,7 @@ inline void gpackB_block(
 
 template <int KC, int NC, int NR, int StrideCol, int StrideRow>
 inline void gpackB(
-    float* __restrict__ B,
+    const float* __restrict__ B,
     float* __restrict__ B_panel  // kc x nc
 ) {
     const int NP = NC / NR;

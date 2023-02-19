@@ -204,10 +204,10 @@ class GEMMLoopTiling(GEMM):
 
         for (int jc = 0; jc < {N}; jc += {nc}) {{
             for (int pc = 0; pc < {K}; pc += {kc}) {{
-                gpackB<{kc}, {nc}, {nr}, {1}, {N}>((float*)B + pc * {kc} * {N} + jc * {nc}, B_panel);
+                gpackB<{kc}, {nc}, {nr}, {1}, {N}>((float*)B + pc * {N} + jc , B_panel);
 
                 for (int ic = 0; ic < {M}; ic += {mc}) {{
-                    gpackA<{mc}, {kc}, {mr}, {1}, {K}>((float*)A + ic * {mc} * {K} + pc * {kc}, A_panel);
+                    gpackA<{mc}, {kc}, {mr}, {1}, {K}>((float*)A + ic * {K} + pc, A_panel);
 
                     int _nc = min({N} - jc, {nc}); // evitar que se pase "matrices grandes?"
                     int _mc = min({M} - ic, {mc}); // evitar que se pase el panel
