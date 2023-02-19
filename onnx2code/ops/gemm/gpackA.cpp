@@ -21,14 +21,14 @@
 //         kc
 // mp = 2
 
-template<int MR, int KC, int StrideCol, int StrideRow>
-void gpackA_block(
+template <int MR, int KC, int StrideCol, int StrideRow>
+inline void gpackA_block(
     float* __restrict__ A,
-    float* __restrict__ A_panel // mr x kc
+    float* __restrict__ A_panel  // mr x kc
 ) {
-    for(int c = 0; c < KC; c++) {
+    for (int c = 0; c < KC; c++) {
         // copy column of mr
-        for(int r = 0; r < MR; r++) {
+        for (int r = 0; r < MR; r++) {
             A_panel[r] = A[r * StrideRow];
         }
 
@@ -38,15 +38,15 @@ void gpackA_block(
     }
 }
 
-template<int MC, int KC, int MR, int StrideCol, int StrideRow>
-void gpackA(
+template <int MC, int KC, int MR, int StrideCol, int StrideRow>
+inline void gpackA(
     float* __restrict__ A,
-    float* __restrict__ A_panel // mc x kc
+    float* __restrict__ A_panel  // mc x kc
 ) {
-    const int MP  = MC / MR;
+    const int MP = MC / MR;
     const int MPl = MC % MR;
 
-    for(int p = 0; p < MP; p++) {
+    for (int p = 0; p < MP; p++) {
         gpackA_block<MR, KC, StrideCol, StrideRow>(A, A_panel);
 
         // advance block
