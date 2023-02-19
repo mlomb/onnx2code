@@ -63,9 +63,9 @@ class OpCall:
     def signature(self) -> str:
         params = []
         for i in range(len(self.inputs)):
-            params.append(f"const float* restrict {self.input_names[i]}")
+            params.append(f"const float* __restrict__ {self.input_names[i]}")
         for i in range(len(self.outputs)):
-            params.append(f"float* restrict {self.output_names[i]}")
+            params.append(f"float* __restrict__ {self.output_names[i]}")
 
         return f"void {self.fn_name()}({', '.join(params)})"
 

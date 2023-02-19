@@ -53,7 +53,7 @@ def main() -> None:
     print("Writing files to", path.resolve())
 
     path.mkdir(parents=True, exist_ok=True)
-    c_file = path / "model.c"
+    c_file = path / "model.cpp"
     h_file = path / "model.h"
     asm_file = path / "model.asm"
     weights_file = path / "weights.bin"

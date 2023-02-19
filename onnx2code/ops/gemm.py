@@ -1,3 +1,4 @@
+from pathlib import Path
 import subprocess
 from typing import Iterable
 
@@ -188,24 +189,25 @@ class GEMMLoopTiling(GEMM):
             raise NotImplementedError("hasC not supported")
 
         nc = N  # Columnas de panel de B
-        kc = 32  # Filas de panel de B
+        kc = 2  # Filas de panel de B
         mc = 32  # Filas de bloque de A
 
-        mr = 4  # Filas de microkernel
-        nr = 4  # Columnas de microkernel
+        mr = 2  # Filas de microkernel
+        nr = 2  # Columnas de microkernel
 
         source = f"""
         memset(OUT, 0, {M * N} * sizeof(float));
 
-        float B_panel[{nc * kc}];
         float A_panel[{mc * kc}];
+        float B_panel[{nc * kc}];
+        float AB[{mr * nr}];
 
         for (int jc = 0; jc < {N}; jc += {nc}) {{
             for (int pc = 0; pc < {K}; pc += {kc}) {{
-                {pack_B('pc', 'jc', N, kc, nc)}
+                gpackB<{kc}, {nc}, {nr}, {1}, {N}>((float*)B + pc * {kc} * {N} + jc * {nc}, B_panel);
 
                 for (int ic = 0; ic < {M}; ic += {mc}) {{
-                    {pack_A('ic', 'pc', K, mc, kc)}
+                    gpackA<{mc}, {kc}, {mr}, {1}, {K}>((float*)A + ic * {mc} * {K} + pc * {kc}, A_panel);
 
                     int _nc = min({N} - jc, {nc}); // evitar que se pase "matrices grandes?"
                     int _mc = min({M} - ic, {mc}); // evitar que se pase el panel
@@ -216,15 +218,23 @@ class GEMMLoopTiling(GEMM):
                             int _nr = min(_nc - jr, {nr}); // evitar que se pase el bloque
                             int _mr = min(_mc - ir, {mr}); // evitar que se pase el bloque
 
-                            // _mr x _kc x _nr
+                            // (_mr x _kc) * (_kc x _nr)
 
-                            for (int mi = ic+ir; mi < ic+ir+_mr; mi++) {{
-                                for (int ni = jc+jr; ni < jc+jr+_nr; ni++) {{
-                                    for (int ki = pc; ki < pc+_kc; ki++) {{
-                                        OUT[mi * {N} + ni] +=
-                                            A_panel[(mi-ic) * {kc} + (ki-pc)] *
-                                            B_panel[(ni-jc) * {kc} + (ki-pc)];
+                            memset(AB, 0, {mr * nr} * sizeof(float));
+
+                            for (int l = 0; l < _kc; l++) {{
+                                for (int j = 0; j< _nr; j++) {{
+                                    for (int i = 0; i< _mr; i++) {{
+                                        AB[i + j * _mr] +=
+                                            A[l * {mr} + i] *
+                                            B[l * {nr} + j];
                                     }}
+                                }}
+                            }}
+
+                            for (int j = 0; j < _nr; j++) {{
+                                for (int i = 0; i < _mr; i++) {{
+                                    OUT[i * {N} + j] += AB[j * _mr + i];
                                 }}
                             }}
 
@@ -236,43 +246,11 @@ class GEMMLoopTiling(GEMM):
         }}
         """
 
-        return OpImpl(
-            lang="c",
-            source=source,
-        )
+        auxs: list[str] = []
 
+        with open(Path(__file__).parent / "gemm" / "gpackA.cpp", "r") as f:
+            auxs.append(f.read())
+        with open(Path(__file__).parent / "gemm" / "gpackB.cpp", "r") as f:
+            auxs.append(f.read())
 
-def pack_B(
-    row_offset_var: str,
-    col_offset_var: str,
-    B_cols: int,
-    kc: int,
-    nc: int,
-) -> str:
-    return f"""
-    // B panel packing
-    for(int pack_k = 0; pack_k < {kc}; pack_k++) {{
-        for(int pack_n = 0; pack_n < {nc}; pack_n++) {{
-            B_panel[pack_n * {kc} + pack_k] =
-                B[({row_offset_var} + pack_k) * {B_cols} + ({col_offset_var} + pack_n)];
-        }}
-    }}
-    """
-
-
-def pack_A(
-    row_offset_var: str,
-    col_offset_var: str,
-    A_cols: int,
-    mc: int,
-    kc: int,
-) -> str:
-    return f"""
-    // A panel packing
-    for(int pack_m = 0; pack_m < {mc}; pack_m++) {{
-        for(int pack_k = 0; pack_k < {kc}; pack_k++) {{
-            A_panel[pack_m * {kc} + pack_k] =
-                A[({row_offset_var} + pack_m) * {A_cols} + ({col_offset_var} + pack_k)];
-        }}
-    }}
-    """
+        return OpImpl(lang="c", source=source, aux_functions=frozenset(auxs))

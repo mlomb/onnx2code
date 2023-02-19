@@ -60,7 +60,7 @@ class ModelService:
 
         temp_dir.mkdir(exist_ok=True)
 
-        c_file = temp_dir / "model.c"
+        c_file = temp_dir / "model.cpp"
         h_file = temp_dir / "model.h"
         asm_file = temp_dir / "model.asm"
         asm_object = temp_dir / "model-asm.o"
@@ -92,7 +92,7 @@ class ModelService:
 
         _run_compilation_command(
             [
-                "gcc",
+                "g++",
                 "-m64",  # 64 bit env
                 str(asm_object),
                 str(h_file),
@@ -107,7 +107,6 @@ class ModelService:
                 "-march=native",
                 "-mtune=native",
                 "-O3",
-                "-std=c99",
             ]
             + (
                 [
