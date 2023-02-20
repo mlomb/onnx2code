@@ -222,19 +222,22 @@ class GEMMLoopTiling(GEMM):
 
                             memset(AB, 0, {mr * nr} * sizeof(float));
 
-                            for (int l = 0; l < _kc; l++) {{
-                                for (int j = 0; j< _nr; j++) {{
-                                    for (int i = 0; i< _mr; i++) {{
-                                        AB[i + j * _mr] +=
-                                            A[l * {mr} + i] *
-                                            B[l * {nr} + j];
+                            for (int k = 0; k < _kc; k++) {{
+                                for (int n = 0; n < _nr; n++) {{
+                                    for (int m = 0; m < _mr; m++) {{
+                                        AB[m + n * {mr}] +=
+                                            A_panel[k * {mr} + m] *
+                                            B_panel[k * {nr} + n];
                                     }}
                                 }}
                             }}
 
+                            float* Ckernel = (float*)OUT + (ic + ir) * {N} + (jc + jr);
+
                             for (int j = 0; j < _nr; j++) {{
                                 for (int i = 0; i < _mr; i++) {{
-                                    OUT[i * {N} + j] += AB[j * _mr + i];
+                                    Ckernel[i * {N} + j] +=
+                                        AB[i + j * {mr}];
                                 }}
                             }}
 
