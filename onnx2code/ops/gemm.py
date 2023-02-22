@@ -174,7 +174,7 @@ class GEMMAsm(GEMM):
             else ""
         )
 
-        return OpImpl(lang="c", source=source, aux_functions=frozenset([aux_fn]))
+        return OpImpl(lang="c", source=source, aux_functions=(aux_fn,))
 
 
 @GEMM.variant(["c", "loop-tiling"], priority=1)
@@ -189,21 +189,21 @@ class GEMMLoopTiling(GEMM):
             raise NotImplementedError("hasC not supported")
 
         nc = N  # Columnas de panel de B
-        kc = 2  # Filas de panel de B
+        kc = 1  # Filas de panel de B
         mc = 32  # Filas de bloque de A
 
-        mr = 2  # Filas de microkernel
-        nr = 2  # Columnas de microkernel
+        mr = 1  # Filas de microkernel
+        nr = 1  # Columnas de microkernel
 
         source = f"gemm<{M},{K},{N},{nc},{kc},{mc},{mr},{nr}>(A, B, OUT);"
 
-        auxs: list[str] = []
+        auxs: tuple[str, ...] = ()
 
         with open(Path(__file__).parent / "gemm" / "gpackA.cpp", "r") as f:
-            auxs.append(f.read())
+            auxs += (f.read(),)
         with open(Path(__file__).parent / "gemm" / "gpackB.cpp", "r") as f:
-            auxs.append(f.read())
+            auxs += (f.read(),)
         with open(Path(__file__).parent / "gemm" / "gemm.cpp", "r") as f:
-            auxs.append(f.read())
+            auxs += (f.read(),)
 
-        return OpImpl(lang="c", source=source, aux_functions=frozenset(auxs))
+        return OpImpl(lang="c", source=source, aux_functions=auxs)

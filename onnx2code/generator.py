@@ -214,9 +214,9 @@ class Generator:
         )
 
         # auxiliary functions
-        aux_functions = set[str]().union(
+        aux_functions = list(dict.fromkeys(
             *(impl.aux_functions for impl in self.impls.keys())
-        )
+        ))
 
         source += "\n".join(aux_functions) + "\n" * 2
 
