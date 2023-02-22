@@ -4,12 +4,12 @@ template<
     int N,
     int K,
 
-    int nc = N, // Columnas de panel de B
-    int kc = 2, // Filas de panel de B
-    int mc = 32, // Filas de bloque de A
+    int nc, // Columnas de panel de B
+    int kc, // Filas de panel de B
+    int mc, // Filas de bloque de A
 
-    int mr = 2, // Filas de microkernel
-    int nr = 2 // Columnas de microkernel
+    int mr, // Filas de microkernel
+    int nr // Columnas de microkernel
 >
 void gemm(
     const float* __restrict__ A, // MxN
@@ -40,6 +40,11 @@ void gemm(
 
                         // (_mr x _kc) * (_kc x _nr)
 
+                        // deberia funcionar con (1x1) * (1x1)
+                        // raro que no estemos indexando B_panel porque mide 1x256
+                        OUT[(ic+ir) * N + (jc+jr)] = A_panel[0] * B_panel[0];
+
+                        /*
                         memset(AB, 0, mr * nr * sizeof(float));
 
                         for (int k = 0; k < _kc; k++) {
@@ -60,6 +65,7 @@ void gemm(
                                     AB[i + j * mr];
                             }
                         }
+                        */
 
                         // --
                     }
