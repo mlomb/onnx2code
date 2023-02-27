@@ -188,7 +188,7 @@ class GEMMLoopTiling(GEMM):
         if self.hasC:
             raise NotImplementedError("hasC not supported")
 
-        nc = 1  # Columnas de panel de B
+        nc = 256  # Columnas de panel de B
         kc = 1  # Filas de panel de B
         mc = 1  # Filas de bloque de A
 

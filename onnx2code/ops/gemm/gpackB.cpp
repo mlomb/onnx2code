@@ -1,7 +1,7 @@
 
 
 template <int KC, int NR, int StrideCol, int StrideRow>
-inline void gpackB_block(
+inline void gpackB_panel(
     const float* __restrict__ B,
     float* __restrict__ B_panel  // kc x nr
 ) {
@@ -26,9 +26,9 @@ inline void gpackB(
     const int NPl = NC % NR;
 
     for (int p = 0; p < NP; p++) {
-        gpackB_block<KC, NR, StrideCol, StrideRow>(B, B_panel);
+        gpackB_panel<KC, NR, StrideCol, StrideRow>(B, B_panel);
 
-        // advance block
+        // advance panel
         B_panel += KC * NR;
         B += NR * StrideCol;
     }

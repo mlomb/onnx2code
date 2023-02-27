@@ -22,7 +22,7 @@
 // mp = 2
 
 template <int MR, int KC, int StrideCol, int StrideRow>
-inline void gpackA_block(
+inline void gpackA_panel(
     float* __restrict__ A,
     float* __restrict__ A_panel  // mr x kc
 ) {
@@ -47,9 +47,9 @@ inline void gpackA(
     const int MPl = MC % MR;
 
     for (int p = 0; p < MP; p++) {
-        gpackA_block<MR, KC, StrideCol, StrideRow>(A, A_panel);
+        gpackA_panel<MR, KC, StrideCol, StrideRow>(A, A_panel);
 
-        // advance block
+        // advance panel
         A_panel += MR * KC;
         A += MR * StrideRow;
     }

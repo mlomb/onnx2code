@@ -42,7 +42,7 @@ void gemm(
 
                         // deberia funcionar con (1x1) * (1x1)
                         // raro que no estemos indexando B_panel porque mide 1x256
-                        OUT[(ic+ir) * N + (jc+jr)] = A_panel[0] * B_panel[0];
+                        OUT[(ic+ir) * N + (jc+jr)] += A_panel[ir] * B_panel[jr];
 
                         /*
                         memset(AB, 0, mr * nr * sizeof(float));
