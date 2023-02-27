@@ -19,7 +19,6 @@ void gemm(
 
     float A_panel[mc * kc];
     float B_panel[nc * kc];
-    float AB[mr * nr];
 
     for (int jc = 0; jc < N; jc += nc) {
         for (int pc = 0; pc < K; pc += kc) {
@@ -31,34 +30,27 @@ void gemm(
                 int _nc = min(N - jc, nc);  // evitar que se pase "matrices grandes?"
                 int _mc = min(M - ic, mc);  // evitar que se pase el panel
 
-                for (int jr = 0; jr < _nc; jr += nr) {
-                    for (int ir = 0; ir < _mc; ir += mr) {
+                for (int jr = 0; jr < _nc; jr += nr) {  // jr es el offset del panel de ancho nr (violeta)
+                    for (int ir = 0; ir < _mc; ir += mr) {  // ir es el offset del panel de ancho mr (verde)
                         int _kc = min(K - pc, kc);    // evitar que se pase el panel
                         int _nr = min(_nc - jr, nr);  // evitar que se pase el bloque
                         int _mr = min(_mc - ir, mr);  // evitar que se pase el bloque
 
                         // (_mr x _kc) * (_kc x _nr)
 
-                        memset(AB, 0, mr * nr * sizeof(float));
+                        const float* A_kernel = A_panel + ir * kc; // (_mr x _kc) column major
+                        const float* B_kernel = B_panel + jr * kc; // (_kc x _nr) row major
 
-                        for (int k = 0; k < _kc; k++) {
-                            for (int n = 0; n < _nr; n++) {
-                                for (int m = 0; m < _mr; m++) {
-                                    AB[n * mr + m] +=
-                                        A_panel[ir * kc + k * mr + m] *
-                                        B_panel[jr * kc + k * nr + n];  // jr es el índice del panel de ancho nr
-                                }
-                            }
-                        }
+                        float* C_writeback = (float*)OUT + (ic + ir) * N + (jc + jr);
 
-                        float* Ckernel = (float*)OUT + (ic + ir) * N + (jc + jr);
+                        // TODO: pasar _mr y _nr para evitar escribir fuera en C
+                        //       quizas un branch entre optimized y ref?
+                        assert(_mr == mr);
+                        assert(_nr == nr);
 
-                        for (int j = 0; j < _nr; j++) {
-                            for (int i = 0; i < _mr; i++) {
-                                Ckernel[i * N + j] +=
-                                    AB[mr * j + i];
-                            }
-                        }
+                        // ref_microkernel<mr, nr, kc, N>(A_kernel, B_kernel, C_writeback);
+
+                        test_microkernel<mr, nr, kc, N>(A_kernel, B_kernel, C_writeback);
 
                         // --
                     }

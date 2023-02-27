@@ -188,7 +188,7 @@ class GEMMLoopTiling(GEMM):
         if self.hasC:
             raise NotImplementedError("hasC not supported")
 
-        nc = 128  # Columnas de panel de B
+        nc = min(4096, N)  # Columnas de panel de B
         kc = 4  # Filas de panel de B
         mc = 32  # Filas de bloque de A
 
@@ -202,6 +202,10 @@ class GEMMLoopTiling(GEMM):
         with open(Path(__file__).parent / "gemm" / "gpackA.cpp", "r") as f:
             auxs += (f.read(),)
         with open(Path(__file__).parent / "gemm" / "gpackB.cpp", "r") as f:
+            auxs += (f.read(),)
+        with open(Path(__file__).parent / "gemm" / "microkernel_ref.cpp", "r") as f:
+            auxs += (f.read(),)
+        with open(Path(__file__).parent / "gemm" / "microkernel_test.cpp", "r") as f:
             auxs += (f.read(),)
         with open(Path(__file__).parent / "gemm" / "gemm.cpp", "r") as f:
             auxs += (f.read(),)
