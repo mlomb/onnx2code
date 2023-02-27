@@ -1,21 +1,20 @@
-template<
+template <
     // matrix sizes
     int M,
     int N,
     int K,
 
-    int nc, // Columnas de panel de B
-    int kc, // Filas de panel de B
-    int mc, // Filas de bloque de A
+    int nc,  // Columnas de panel de B
+    int kc,  // Filas de panel de B
+    int mc,  // Filas de bloque de A
 
-    int mr, // Filas de microkernel
-    int nr // Columnas de microkernel
->
+    int mr,  // Filas de microkernel
+    int nr   // Columnas de microkernel
+    >
 void gemm(
-    const float* __restrict__ A, // MxN
-    const float* __restrict__ B, // 
-    float* __restrict__ OUT
-) {
+    const float* __restrict__ A,  // MxN
+    const float* __restrict__ B,  //
+    float* __restrict__ OUT) {
     memset(OUT, 0, M * N * sizeof(float));
 
     float A_panel[mc * kc];
@@ -24,35 +23,30 @@ void gemm(
 
     for (int jc = 0; jc < N; jc += nc) {
         for (int pc = 0; pc < K; pc += kc) {
-            gpackB<kc, nc, nr, 1, N>((float*)B + pc * N + jc , B_panel);
+            gpackB<kc, nc, nr, 1, N>((float*)B + pc * N + jc, B_panel);
 
             for (int ic = 0; ic < M; ic += mc) {
                 gpackA<mc, kc, mr, 1, K>((float*)A + ic * K + pc, A_panel);
 
-                int _nc = min(N - jc, nc); // evitar que se pase "matrices grandes?"
-                int _mc = min(M - ic, mc); // evitar que se pase el panel
+                int _nc = min(N - jc, nc);  // evitar que se pase "matrices grandes?"
+                int _mc = min(M - ic, mc);  // evitar que se pase el panel
 
                 for (int jr = 0; jr < _nc; jr += nr) {
                     for (int ir = 0; ir < _mc; ir += mr) {
-                        int _kc = min(K - pc, kc); // evitar que se pase el panel
-                        int _nr = min(_nc - jr, nr); // evitar que se pase el bloque
-                        int _mr = min(_mc - ir, mr); // evitar que se pase el bloque
+                        int _kc = min(K - pc, kc);    // evitar que se pase el panel
+                        int _nr = min(_nc - jr, nr);  // evitar que se pase el bloque
+                        int _mr = min(_mc - ir, mr);  // evitar que se pase el bloque
 
                         // (_mr x _kc) * (_kc x _nr)
 
-                        // deberia funcionar con (1x1) * (1x1)
-                        // raro que no estemos indexando B_panel porque mide 1x256
-                        OUT[(ic+ir) * N + (jc+jr)] += A_panel[ir] * B_panel[jr];
-
-                        /*
                         memset(AB, 0, mr * nr * sizeof(float));
 
                         for (int k = 0; k < _kc; k++) {
                             for (int n = 0; n < _nr; n++) {
                                 for (int m = 0; m < _mr; m++) {
-                                    AB[m + n * mr] +=
-                                        A_panel[k * mr + m] *
-                                        B_panel[k * nr + n];
+                                    AB[n * mr + m] +=
+                                        A_panel[ir * kc + k * mr + m] *
+                                        B_panel[jr * kc + k * nr + n];  // jr es el índice del panel de ancho nr
                                 }
                             }
                         }
@@ -62,10 +56,9 @@ void gemm(
                         for (int j = 0; j < _nr; j++) {
                             for (int i = 0; i < _mr; i++) {
                                 Ckernel[i * N + j] +=
-                                    AB[i + j * mr];
+                                    AB[mr * j + i];
                             }
                         }
-                        */
 
                         // --
                     }
