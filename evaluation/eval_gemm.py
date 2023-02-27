@@ -2,10 +2,9 @@ import setup  # noqa # isort:skip
 
 import keras
 import matplotlib.pyplot as plt
+import numpy as np
 from keras import layers
 from measure import measure_all
-import numpy as np
-
 
 SIZES = np.arange(1, 50) ** 2
 VARIATIONS = ["gemm-naive", "loop-tiling", "libxsmm"]

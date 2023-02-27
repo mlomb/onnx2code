@@ -1,27 +1,27 @@
-template <
-    int mv,
-    int nu,
+// template <
+//     int mv,
+//     int nu,
 
-    int CStrideRow,
-    int CStrideCol>
-inline void unit_update(
-    const float* __restrict__ a,  // mv
-    const float* __restrict__ b,  // nu
-    float* __restrict__ C         // mv x nu
-) {
-    __asm__ __volatile__(
-        "vbroadcastss %1, %%ymm0 \n"
-        "vmovups %0, %%ymm1 \n"
-        "vfmaddps %%ymm0, %2, %%ymm0, %%ymm1 \n"
-        "vmovups %%ymm0, %2 \n"
-        :        // no output
-        :        // inputs
-        "m"(a),  // %0
-        "m"(b),  // %1
-        "m"(C)   // %2
-        : "ymm0", "ymm1"
-    );
-}
+//     int CStrideRow,
+//     int CStrideCol>
+// inline void unit_update(
+//     const float* __restrict__ a,  // mv
+//     const float* __restrict__ b,  // nu
+//     float* __restrict__ C         // mv x nu
+// ) {
+//     __asm__ __volatile__(
+//         "vbroadcastss (%1), %%ymm0 \n\t"
+//         "vmovups (%0), %%ymm1 \n\t"
+//         "vfmadd231ps  (%2), %%ymm1, %%ymm0 \n\t"
+//         "vmovups %%ymm0, (%2)"
+//         :        // no output
+//         :        // inputs
+//         "r"(a),  // %0
+//         "r"(b),  // %1
+//         "r"(C)   // %2
+//         : "ymm0", "ymm1"
+//     );
+// }
 
 template <
     int mr,
@@ -51,11 +51,10 @@ inline void test_microkernel(
         for (int j = 0; j < nr; j += nu) {
             for (int i = 0; i < mr; i += mv) {
                 // unit update (small outer product)
-                unit_update<mv, nu, nr, 1>(
+                unit_update(
                     A_kernel + i,
                     B_kernel + j,
-
-                    AB + j * mr + 
+                    AB + j * mr + i
                 );
             }
         }

@@ -1,8 +1,9 @@
 import os
+import re
 import warnings
 from collections import defaultdict
 from pathlib import Path
-from textwrap import indent
+from textwrap import dedent, indent
 
 import numpy as np
 import onnx
@@ -213,19 +214,56 @@ class Generator:
             ]
         )
 
-        # auxiliary functions
-        aux_functions = list(dict.fromkeys(
-            *(impl.aux_functions for impl in self.impls.keys())
-        ))
+        # asm auxiliary function declarations
 
-        source += "\n".join(aux_functions) + "\n" * 2
+        source += "// Auxiliary functions (ASM):\n\n"
+
+        asm_aux_declarations = [
+            f"{asm_aux_function.signature};"
+            for impl in self.impls.keys()
+            for asm_aux_function in impl.asm_aux_functions
+        ]
+
+        source += "extern \"C\" {\n" + "\n\n".join(asm_aux_declarations) + "\n}\n\n"
+
+        # loading external files
+        source += "// External files:\n\n"
+
+        external_file_paths = [
+            path for impl in self.impls.keys() for path in impl.external_paths
+        ]
+
+        for path in external_file_paths:
+            source += f"// {path}\n\n"
+            with open(path, "r") as f:
+                source += f.read() + "\n"
+
+        source += "\n" * 2
+
+        # c++ auxiliary functions
+
+        source += "// Auxiliary functions (C++):\n\n"
+
+        cpp_aux_functions = list(
+            dict.fromkeys(*(impl.cpp_aux_functions for impl in self.impls.keys()))
+        )
+
+        source += "\n".join(cpp_aux_functions) + "\n" * 2
 
         # define ASM functions in C
+
+        source += "// ASM functions:\n\n"
+
         for impl, call in self.impls.items():
             if impl.lang == "asm":
                 source += f"extern {call.signature()};"
 
+        source += "\n" * 2
+
         # implementations
+
+        source += "// Implementations:\n\n"
+
         for impl, call in self.impls.items():
             if impl.lang == "c":
                 source += call.signature() + " {\n"
@@ -296,6 +334,22 @@ class Generator:
     def _gen_asm_source(self) -> str:
         source = ""
 
+        # asm auxiliary functions
+
+        for impl in self.impls.keys():
+            for asm_aux_function in impl.asm_aux_functions:
+                # extract name from signature
+                regex = re.compile(r"(\w+)\s*\(")
+                match = regex.search(asm_aux_function.signature)
+                assert match is not None, "invalid signature"
+                name = match.group(1)
+
+                function_source = indent(
+                    dedent(asm_aux_function.source), prefix=" " * 4
+                )
+
+                source += f"global {name}\n{name}:{function_source}\n\n"
+
         for impl, call in self.impls.items():
             if impl.lang == "asm":
                 comments = [call.signature()] + [
@@ -305,7 +359,7 @@ class Generator:
                         + call.output_names[: len(call.outputs)]
                     )
                 ]
-                source = "\n".join(
+                source += "\n\n".join(
                     [
                         *[f";; {c}" for c in comments],
                         f"global {call.fn_name()}",
@@ -314,4 +368,4 @@ class Generator:
                     ]
                 )
 
-        return source
+        return source.strip() + "\n"

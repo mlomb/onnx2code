@@ -1,10 +1,10 @@
-from pathlib import Path
 import subprocess
+from pathlib import Path
 from typing import Iterable
 
 from onnx2code.util import get_attribute
 
-from .operation import OpCall, Operation, OpImpl
+from .operation import ASMAuxFunction, OpCall, Operation, OpImpl
 
 
 class GEMM(Operation):
@@ -174,7 +174,7 @@ class GEMMAsm(GEMM):
             else ""
         )
 
-        return OpImpl(lang="c", source=source, aux_functions=(aux_fn,))
+        return OpImpl(lang="c", source=source, cpp_aux_functions=(aux_fn,))
 
 
 @GEMM.variant(["c", "loop-tiling"], priority=1)
@@ -197,17 +197,29 @@ class GEMMLoopTiling(GEMM):
 
         source = f"gemm<{M},{K},{N},{nc},{kc},{mc},{mr},{nr}>(A, B, OUT);"
 
-        auxs: tuple[str, ...] = ()
+        external_paths = (
+            Path(__file__).parent / "gemm" / "gpackA.cpp",
+            Path(__file__).parent / "gemm" / "gpackB.cpp",
+            Path(__file__).parent / "gemm" / "microkernel_ref.cpp",
+            Path(__file__).parent / "gemm" / "microkernel_test.cpp",
+            Path(__file__).parent / "gemm" / "gemm.cpp",
+        )
 
-        with open(Path(__file__).parent / "gemm" / "gpackA.cpp", "r") as f:
-            auxs += (f.read(),)
-        with open(Path(__file__).parent / "gemm" / "gpackB.cpp", "r") as f:
-            auxs += (f.read(),)
-        with open(Path(__file__).parent / "gemm" / "microkernel_ref.cpp", "r") as f:
-            auxs += (f.read(),)
-        with open(Path(__file__).parent / "gemm" / "microkernel_test.cpp", "r") as f:
-            auxs += (f.read(),)
-        with open(Path(__file__).parent / "gemm" / "gemm.cpp", "r") as f:
-            auxs += (f.read(),)
+        unit_update_asm = ASMAuxFunction(
+            signature="void unit_update(const float*, const float*, float*)",
+            source="""
+                vbroadcastss    ymm0, [rsi]
+                vmovups ymm1, [rdi]
+                vfmaddps        ymm0, ymm0, ymm1, [rdx]
+                vmovups [rdx], ymm0
+                vzeroupper
+                ret
+            """,
+        )
 
-        return OpImpl(lang="c", source=source, aux_functions=auxs)
+        return OpImpl(
+            lang="c",
+            source=source,
+            external_paths=external_paths,
+            asm_aux_functions=(unit_update_asm,),
+        )

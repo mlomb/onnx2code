@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass
+from pathlib import Path
 from textwrap import dedent
 from typing import Any, Callable, Literal
 
@@ -77,10 +78,18 @@ class OpCall:
 
 
 @dataclass(frozen=True)
+class ASMAuxFunction:
+    signature: str
+    source: str
+
+
+@dataclass(frozen=True)
 class OpImpl:
     lang: Literal["c", "asm"]
     source: str | tuple[str, ...]
-    aux_functions: tuple[str, ...] = ()
+    cpp_aux_functions: tuple[str, ...] = ()
+    asm_aux_functions: tuple[ASMAuxFunction, ...] = ()
+    external_paths: tuple[Path, ...] = ()
 
     def full_source(self) -> str:
         code = self.source if isinstance(self.source, str) else "\n".join(self.source)
