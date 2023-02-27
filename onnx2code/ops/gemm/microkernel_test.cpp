@@ -32,8 +32,8 @@ inline void test_microkernel(
     float AB[mr * nr]; // row major
     memset(AB, 0, mr * nr * sizeof(float));
 
-    constexpr int mv = 1;
-    constexpr int nu = 1;
+    constexpr int mv = 2;
+    constexpr int nu = 2;
 
     static_assert(mr % mv == 0, "must be conforming");
     static_assert(nr % nu == 0, "must be conforming");
@@ -43,20 +43,21 @@ inline void test_microkernel(
         // en una columna de A y una fila de B (del zigzag)
 
         // loop tiling
-        for (int i = 0; i < mr; i += mv) {
-            for (int j = 0; j < nr; j += nu) {
+        for (int j = 0; j < nr; j += nu) {
+            for (int i = 0; i < mr; i += mv) {
                 // unit update (small outer product)
                 unit_update<mv, nu, nr, 1>(
-                    A_kernel + j * mr + i,
-                    B_kernel + i * nr + j,
+                    A_kernel + i,
+                    B_kernel + j,
 
-                    AB + i * nr + j
+                    AB + j * mr + i
                 );
             }
         }
 
-        A_kernel += mr * kc;
-        B_kernel += nr * kc;
+        // advance one row of A and one column of B
+        A_kernel += mr;
+        B_kernel += nr;
     }
 
     for (int j = 0; j < nr; j++) {

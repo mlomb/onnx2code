@@ -189,11 +189,11 @@ class GEMMLoopTiling(GEMM):
             raise NotImplementedError("hasC not supported")
 
         nc = min(4096, N)  # Columnas de panel de B
-        kc = 4  # Filas de panel de B
+        kc = 8  # Filas de panel de B
         mc = 32  # Filas de bloque de A
 
-        mr = 16  # Filas de microkernel
-        nr = 16  # Columnas de microkernel
+        mr = 8  # Filas de microkernel
+        nr = 8  # Columnas de microkernel
 
         source = f"gemm<{M},{K},{N},{nc},{kc},{mc},{mr},{nr}>(A, B, OUT);"
 
