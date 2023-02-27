@@ -208,9 +208,9 @@ class GEMMLoopTiling(GEMM):
         unit_update_asm = ASMAuxFunction(
             signature="void unit_update(const float*, const float*, float*)",
             source="""
-                vbroadcastss    ymm0, [rsi]
+                vbroadcastss ymm0, [rsi]
                 vmovups ymm1, [rdi]
-                vfmaddps        ymm0, ymm0, ymm1, [rdx]
+                vfmadd213ps ymm0, ymm1, [rdx]
                 vmovups [rdx], ymm0
                 vzeroupper
                 ret
