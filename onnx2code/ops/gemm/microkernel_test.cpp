@@ -1,39 +1,44 @@
-template<
+template <
     int mv,
     int nu,
 
     int CStrideRow,
-    int CStrideCol
->
+    int CStrideCol>
 inline void unit_update(
-    const float* __restrict__ a, // mv
-    const float* __restrict__ b, // nu
-    float* __restrict__ C // mv x nu
+    const float* __restrict__ a,  // mv
+    const float* __restrict__ b,  // nu
+    float* __restrict__ C         // mv x nu
 ) {
-    for (int i = 0; i < mv; i++) {
-        for (int j = 0; j < nu; j++) {
-            C[j * CStrideRow + i * CStrideCol] += a[i] * b[j];
-        }
-    }
+    __asm__ __volatile__(
+        "vbroadcastss %1, %%ymm0 \n"
+        "vmovups %0, %%ymm1 \n"
+        "vfmaddps %%ymm0, %2, %%ymm0, %%ymm1 \n"
+        "vmovups %%ymm0, %2 \n"
+        :        // no output
+        :        // inputs
+        "m"(a),  // %0
+        "m"(b),  // %1
+        "m"(C)   // %2
+        : "ymm0", "ymm1"
+    );
 }
 
-template<
+template <
     int mr,
     int nr,
     int kc,
 
-    int CStrideRow
->
+    int CStrideRow>
 inline void test_microkernel(
     const float* __restrict__ A_kernel,  // (mr x kc) column major
     const float* __restrict__ B_kernel,  // (kc x nr) row major
-    float* __restrict__ C // (mr x nr)
+    float* __restrict__ C                // (mr x nr)
 ) {
-    float AB[mr * nr]; // row major
+    float AB[mr * nr];  // row major
     memset(AB, 0, mr * nr * sizeof(float));
 
-    constexpr int mv = 2;
-    constexpr int nu = 2;
+    constexpr int mv = 8;
+    constexpr int nu = 1;
 
     static_assert(mr % mv == 0, "must be conforming");
     static_assert(nr % nu == 0, "must be conforming");
@@ -50,7 +55,7 @@ inline void test_microkernel(
                     A_kernel + i,
                     B_kernel + j,
 
-                    AB + j * mr + i
+                    AB + j * mr + 
                 );
             }
         }
