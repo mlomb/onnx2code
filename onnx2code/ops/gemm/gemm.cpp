@@ -9,7 +9,10 @@ template <
     int mc,  // Filas de bloque de A
 
     int mr,  // Filas de microkernel
-    int nr   // Columnas de microkernel
+    int nr,  // Columnas de microkernel
+
+    int mv,  // Filas de unit update
+    int nu   // Columnas de unit update
     >
 void gemm(
     const float* __restrict__ A,  // MxN
@@ -30,16 +33,16 @@ void gemm(
                 int _nc = min(N - jc, nc);  // evitar que se pase "matrices grandes?"
                 int _mc = min(M - ic, mc);  // evitar que se pase el panel
 
-                for (int jr = 0; jr < _nc; jr += nr) {  // jr es el offset del panel de ancho nr (violeta)
+                for (int jr = 0; jr < _nc; jr += nr) {      // jr es el offset del panel de ancho nr (violeta)
                     for (int ir = 0; ir < _mc; ir += mr) {  // ir es el offset del panel de ancho mr (verde)
-                        int _kc = min(K - pc, kc);    // evitar que se pase el panel
-                        int _nr = min(_nc - jr, nr);  // evitar que se pase el bloque
-                        int _mr = min(_mc - ir, mr);  // evitar que se pase el bloque
+                        int _kc = min(K - pc, kc);          // evitar que se pase el panel
+                        int _nr = min(_nc - jr, nr);        // evitar que se pase el bloque
+                        int _mr = min(_mc - ir, mr);        // evitar que se pase el bloque
 
                         // (_mr x _kc) * (_kc x _nr)
 
-                        const float* A_kernel = A_panel + ir * kc; // (_mr x _kc) column major
-                        const float* B_kernel = B_panel + jr * kc; // (_kc x _nr) row major
+                        const float* A_kernel = A_panel + ir * kc;  // (_mr x _kc) column major
+                        const float* B_kernel = B_panel + jr * kc;  // (_kc x _nr) row major
 
                         float* C_writeback = (float*)OUT + (ic + ir) * N + (jc + jr);
 
@@ -50,7 +53,7 @@ void gemm(
 
                         // ref_microkernel<mr, nr, kc, N>(A_kernel, B_kernel, C_writeback);
 
-                        test_microkernel<mr, nr, kc, N>(A_kernel, B_kernel, C_writeback);
+                        test_microkernel<mr, nr, kc, mv, nu, N>(A_kernel, B_kernel, C_writeback);
 
                         // --
                     }

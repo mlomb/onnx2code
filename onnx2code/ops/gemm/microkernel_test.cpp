@@ -27,6 +27,8 @@ template <
     int mr,
     int nr,
     int kc,
+    int mv,
+    int nu,
 
     int CStrideRow>
 inline void test_microkernel(
@@ -36,9 +38,6 @@ inline void test_microkernel(
 ) {
     float AB[mr * nr];  // row major
     memset(AB, 0, mr * nr * sizeof(float));
-
-    constexpr int mv = 8;
-    constexpr int nu = 1;
 
     static_assert(mr % mv == 0, "must be conforming");
     static_assert(nr % nu == 0, "must be conforming");

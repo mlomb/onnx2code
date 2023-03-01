@@ -195,7 +195,10 @@ class GEMMLoopTiling(GEMM):
         mr = 8  # Filas de microkernel
         nr = 8  # Columnas de microkernel
 
-        source = f"gemm<{M},{K},{N},{nc},{kc},{mc},{mr},{nr}>(A, B, OUT);"
+        mv = 8
+        nu = 1
+
+        source = f"gemm<{M},{K},{N},{nc},{kc},{mc},{mr},{nr},{mv},{nu}>(A, B, OUT);"
 
         external_paths = (
             Path(__file__).parent / "gemm" / "gpackA.cpp",
