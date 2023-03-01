@@ -1,10 +1,11 @@
+from dataclasses import dataclass
 import subprocess
 from pathlib import Path
 from typing import Iterable
 
 from onnx2code.util import get_attribute
 
-from .operation import ASMAuxFunction, OpCall, Operation, OpImpl
+from .operation import OpCall, Operation, OpImpl
 
 
 class GEMM(Operation):
@@ -177,6 +178,29 @@ class GEMMAsm(GEMM):
         return OpImpl(lang="c", source=source, cpp_aux_functions=(aux_fn,))
 
 
+@dataclass
+class LoopTilingParams:
+    nc: int  # Columnas de panel de B
+    kc: int  # Filas de panel de B
+    mc: int  # Filas de bloque de A
+    mr: int  # Filas de microkernel
+    nr: int  # Columnas de microkernel
+
+
+tiling_params = LoopTilingParams(
+    nc=4096,
+    kc=256,
+    mc=256,
+    mr=4,
+    nr=4,
+)
+
+
+def set_tiling_params(params: LoopTilingParams) -> None:
+    global tiling_params
+    tiling_params = params
+
+
 @GEMM.variant(["c", "loop-tiling"], priority=1)
 class GEMMLoopTiling(GEMM):
     # def kernel(n: int, m: int) -> str:
@@ -188,15 +212,14 @@ class GEMMLoopTiling(GEMM):
         if self.hasC:
             raise NotImplementedError("hasC not supported")
 
-        nc = min(4096, N)  # Columnas de panel de B
-        kc = 8  # Filas de panel de B
-        mc = 32  # Filas de bloque de A
+        nc = min(N, tiling_params.nc)
+        kc = tiling_params.kc
+        mc = tiling_params.mc
+        mr = tiling_params.mr
+        nr = tiling_params.nr
 
-        mr = 8  # Filas de microkernel
-        nr = 8  # Columnas de microkernel
-
-        mv = 8
-        nu = 1
+        mv = 4
+        nu = 4
 
         source = f"gemm<{M},{K},{N},{nc},{kc},{mc},{mr},{nr},{mv},{nu}>(A, B, OUT);"
 
@@ -208,21 +231,21 @@ class GEMMLoopTiling(GEMM):
             Path(__file__).parent / "gemm" / "gemm.cpp",
         )
 
-        unit_update_asm = ASMAuxFunction(
-            signature="void unit_update(const float*, const float*, float*)",
-            source="""
-                vbroadcastss ymm0, [rsi]
-                vmovups ymm1, [rdi]
-                vfmadd213ps ymm0, ymm1, [rdx]
-                vmovups [rdx], ymm0
-                vzeroupper
-                ret
-            """,
-        )
+        # unit_update_asm = ASMAuxFunction(
+        #     signature="void unit_update(const float*, const float*, float*)",
+        #     source="""
+        #         vbroadcastss ymm0, [rsi]
+        #         vmovups ymm1, [rdi]
+        #         vfmadd213ps ymm0, ymm1, [rdx]
+        #         vmovups [rdx], ymm0
+        #         vzeroupper
+        #         ret
+        #     """,
+        # )
 
         return OpImpl(
             lang="c",
             source=source,
             external_paths=external_paths,
-            asm_aux_functions=(unit_update_asm,),
+            # asm_aux_functions=(unit_update_asm,),
         )
