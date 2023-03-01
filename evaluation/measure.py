@@ -63,7 +63,11 @@ def measure_onnx2code(
 
 
 def measure_all(
-    tf_model: tf.keras.Model, runs: int = 300, variations: list[str] = []
+    tf_model: tf.keras.Model,
+    runs: int = 300,
+    variations: list[str] = [],
+    *,
+    measure_base: bool = True,
 ) -> dict[str, list[float]]:
     """
     Measure the inference time of the given model in tf, onnxruntime and onnx2code.
@@ -92,7 +96,11 @@ def measure_all(
             measure_onnx2code(model_variation, inputs, total, variation)
         )
 
-    return results | {
-        "tensorflow": postprocess(measure_tf(tf_model, inputs, total)),
-        "onnxruntime": postprocess(measure_onnxruntime(model_proto, inputs, total)),
-    }
+    return results | (
+        {
+            "tensorflow": postprocess(measure_tf(tf_model, inputs, total)),
+            "onnxruntime": postprocess(measure_onnxruntime(model_proto, inputs, total)),
+        }
+        if measure_base
+        else {}
+    )
