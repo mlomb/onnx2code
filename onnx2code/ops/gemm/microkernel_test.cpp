@@ -11,7 +11,7 @@ inline void unit_update(
 ) {
     for (int i = 0; i < mv; i++) {
         for (int j = 0; j < nu; j++) {
-            C[j * CStrideRow + i * CStrideCol] += a[i] * b[j];
+            C[i * CStrideRow + j * CStrideCol] += a[i] * b[j];
         }
     }
 }
@@ -46,8 +46,7 @@ inline void test_microkernel(
                 unit_update<mv, nu, nr, 1>(
                     A_kernel + i,
                     B_kernel + j,
-                    AB + j * mr + i
-                );
+                    AB + i * nr + j);
             }
         }
 
@@ -56,9 +55,9 @@ inline void test_microkernel(
         B_kernel += nr;
     }
 
-    for (int j = 0; j < nr; j++) {
-        for (int i = 0; i < mr; i++) {
-            C[i * CStrideRow + j] += AB[mr * j + i];
+    for (int i = 0; i < mr; i++) {
+        for (int j = 0; j < nr; j++) {
+            C[i * CStrideRow + j] += AB[i * nr + j];
         }
     }
 }

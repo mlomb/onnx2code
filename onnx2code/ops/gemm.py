@@ -192,7 +192,7 @@ tiling_params = LoopTilingParams(
     kc=256,
     mc=256,
     mr=4,
-    nr=4,
+    nr=8,
 )
 
 
