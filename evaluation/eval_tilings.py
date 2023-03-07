@@ -43,12 +43,13 @@ for nc, kc, mc, mr, nr, mv, nu in product(
     A_sliver = mr * kc * FLOAT_SIZE
     AB = mr * nr * FLOAT_SIZE
     total = A_sliver + B_sliver + AB
+    remaining = L1_SIZE - total
     print("L1:")
     print(f"\t{A_sliver=}")
     print(f"\t{B_sliver=}")
     print(f"\t{AB=}")
     print(f"\t{total=}")
-    print(f"\tremaining={L1_SIZE - total}")
+    print(f"\t{remaining=}")
 
     data = measure_all(model, variations=["loop-tiling"], measure_base=False)
 

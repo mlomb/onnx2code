@@ -17,7 +17,7 @@ from .util import get_fixed_input_shapes
 
 REGISTER_ORDER = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]
 INFERENCE_SIGNATURE = (
-    "void inference(const float* weights, const float* inputs, float* outputs)"
+    "void __attribute__ ((noinline)) inference(const float* weights, const float* inputs, float* outputs)"
 )
 
 
