@@ -23,11 +23,13 @@ void gemm(
     float A_panel[mc * kc];
     float B_panel[nc * kc];
 
+    float AB_microkernel[mr * nr];
+
     for (int jc = 0; jc < N; jc += nc) {
         for (int pc = 0; pc < K; pc += kc) {
             gpackB<kc, nc, nr, 1, N>((float*)B + pc * N + jc, B_panel);
 
-            int _kc = min(K - pc, kc);          // evitar que se pase el panel
+            int _kc = min(K - pc, kc);  // evitar que se pase el panel
 
             for (int ic = 0; ic < M; ic += mc) {
                 gpackA<mc, kc, mr, 1, K>((float*)A + ic * K + pc, A_panel);
@@ -37,26 +39,41 @@ void gemm(
 
                 for (int jr = 0; jr < _nc; jr += nr) {      // jr es el offset del panel de ancho nr (violeta)
                     for (int ir = 0; ir < _mc; ir += mr) {  // ir es el offset del panel de ancho mr (verde)
-                        int _nr = min(_nc - jr, nr);        // evitar que se pase el bloque
-                        int _mr = min(_mc - ir, mr);        // evitar que se pase el bloque
-
                         // (_mr x _kc) * (_kc x _nr)
 
                         const float* A_kernel = A_panel + ir * kc;  // (_mr x _kc) column major
                         const float* B_kernel = B_panel + jr * kc;  // (_kc x _nr) row major
 
-                        float* C_writeback = (float*)OUT + (ic + ir) * N + (jc + jr);
+                        // ref_microkernel<mr, nr, kc, N>(A_kernel, B_kernel, AB_microkernel);
+
+                        memset(AB_microkernel, 0, mr * nr * sizeof(float));
+                        test_microkernel<mr, nr, mv, nu>(_kc, A_kernel, B_kernel, AB_microkernel);
 
                         // TODO: pasar _mr y _nr para evitar escribir fuera en C
                         //       quizas un branch entre optimized y ref?
-                        assert(_mr == mr);
-                        assert(_nr == nr);
+                        int _nr = min(_nc - jr, nr);  // evitar que se pase el bloque
+                        int _mr = min(_mc - ir, mr);  // evitar que se pase el bloque
 
-                        // ref_microkernel<mr, nr, kc, N>(A_kernel, B_kernel, C_writeback);
+                        // assert(_mr == mr);
+                        // assert(_nr == nr);
 
-                        test_microkernel<mr, nr, kc, mv, nu, N>(A_kernel, B_kernel, C_writeback);
+                        float* C_writeback = (float*)OUT + (ic + ir) * N + (jc + jr);
 
-                        // --
+                        if (_mr == mr && _nr == nr) {
+                            // Versión optimizada
+                            for (int i = 0; i < mr; i++) {
+                                for (int j = 0; j < nr; j++) {
+                                    C_writeback[i * N + j] += AB_microkernel[i * nr + j];
+                                }
+                            }
+                        } else {
+                            // Edge case
+                            for (int i = 0; i < _mr; i++) {
+                                for (int j = 0; j < _nr; j++) {
+                                    C_writeback[i * N + j] += AB_microkernel[i * nr + j];
+                                }
+                            }
+                        }
                     }
                 }
             }

@@ -19,19 +19,14 @@ inline void unit_update(
 template <
     int mr,
     int nr,
-    int kc,
     int mv,
-    int nu,
-
-    int CStrideRow>
+    int nu>
 inline void test_microkernel(
+    int kc,
     const float* __restrict__ A_kernel,  // (mr x kc) column major
     const float* __restrict__ B_kernel,  // (kc x nr) row major
-    float* __restrict__ C                // (mr x nr)
+    float* __restrict__ AB               // (mr x nr)
 ) {
-    float AB[mr * nr];  // row major
-    memset(AB, 0, mr * nr * sizeof(float));
-
     static_assert(mr % mv == 0, "must be conforming");
     static_assert(nr % nu == 0, "must be conforming");
 
@@ -53,11 +48,5 @@ inline void test_microkernel(
         // advance one row of A and one column of B
         A_kernel += mr;
         B_kernel += nr;
-    }
-
-    for (int i = 0; i < mr; i++) {
-        for (int j = 0; j < nr; j++) {
-            C[i * CStrideRow + j] += AB[i * nr + j];
-        }
     }
 }

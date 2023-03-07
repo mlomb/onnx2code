@@ -20,7 +20,7 @@ debug:
 	gdb output/main output/model-asm.o -ex "b unit_update" -ex "r"
 
 profile:
-	python -m onnx2code data/model.onnx output --variations=gemm-naive --checks=1; \
+	python -m onnx2code data/model.onnx output --variations=loop-tiling --checks=1; \
 	nasm -f elf64 output/model.asm -o output/model-asm.o -g && \
 	g++ -Ioutput/ output/model.cpp onnx2code/debugger.c output/model-asm.o -o output/main \
 		-g -O3 -march=native -mtune=native

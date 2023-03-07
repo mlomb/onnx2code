@@ -21,40 +21,39 @@
 //         kc
 // mp = 2
 
-template <int MR, int KC, int StrideCol, int StrideRow>
+template <int mr, int kc, int StrideCol, int StrideRow>
 inline void gpackA_panel(
     float* __restrict__ A,
     float* __restrict__ A_panel  // mr x kc
 ) {
-    for (int c = 0; c < KC; c++) {
+    for (int c = 0; c < kc; c++) {
         // copy column of mr
-        for (int r = 0; r < MR; r++) {
+        for (int r = 0; r < mr; r++) {
             A_panel[r] = A[r * StrideRow];
         }
 
         // advance column
-        A_panel += MR;
+        A_panel += mr;
         A += StrideCol;
     }
 }
 
-template <int MC, int KC, int MR, int StrideCol, int StrideRow>
+template <int mc, int kc, int mr, int StrideCol, int StrideRow>
 inline void gpackA(
     float* __restrict__ A,
     float* __restrict__ A_panel  // mc x kc
 ) {
-    const int MP = MC / MR;
-    const int MPl = MC % MR;
+    const int MP = mc / mr;
+    const int MPl = mc % mr;
+
+    if (MPl > 0)
+        memset(A_panel, 0, mc * kc * sizeof(float));
 
     for (int p = 0; p < MP; p++) {
-        gpackA_panel<MR, KC, StrideCol, StrideRow>(A, A_panel);
+        gpackA_panel<mr, kc, StrideCol, StrideRow>(A, A_panel);
 
         // advance panel
-        A_panel += MR * KC;
-        A += MR * StrideRow;
-    }
-    if (MPl > 0) {
-        // TODO: handle leftover (padding with zeros)
-        assert(false);
+        A_panel += mr * kc;
+        A += mr * StrideRow;
     }
 }

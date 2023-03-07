@@ -21,7 +21,7 @@ model = keras.Sequential(
     ]
 )
 
-set_tiling_params(LoopTilingParams(nc=4096, kc=256, mc=128, mr=4, nr=8))
+set_tiling_params(LoopTilingParams(nc=4096, kc=256, mc=128, mr=4, nr=8, mv=4, nu=4))
 
 # Measure models
 data = measure_all(model, variations=["gemm-naive", "loop-tiling", "libxsmm"])
