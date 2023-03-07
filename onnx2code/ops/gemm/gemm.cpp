@@ -16,9 +16,16 @@ template <
     >
 void gemm(
     const float* __restrict__ A,  // MxN
-    const float* __restrict__ B,  //
-    float* __restrict__ OUT) {
+    const float* __restrict__ B,  // NxK
+    float* __restrict__ OUT      // MxK
+) {
     memset(OUT, 0, M * N * sizeof(float));
+
+    // Si no se cumplen, las multiplicaciones de microkernel acceden
+    // a memoria inválida en los edge cases
+    // Podría solucionarse agregando un sliver más a A_panel y B_panel
+    static_assert(mc % mr == 0, "must be conforming");
+    static_assert(nc % nr == 0, "must be conforming");
 
     float A_panel[mc * kc];
     float B_panel[nc * kc];

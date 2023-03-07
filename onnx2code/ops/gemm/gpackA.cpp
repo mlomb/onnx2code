@@ -44,10 +44,10 @@ inline void gpackA(
     float* __restrict__ A_panel  // mc x kc
 ) {
     const int MP = mc / mr;
-    const int MPl = mc % mr;
+    // const int MPl = mc % mr;
 
-    if (MPl > 0)
-        memset(A_panel, 0, mc * kc * sizeof(float));
+    // if (MPl > 0)
+    //     memset(A_panel, 0, mc * kc * sizeof(float));
 
     for (int p = 0; p < MP; p++) {
         gpackA_panel<mr, kc, StrideCol, StrideRow>(A, A_panel);

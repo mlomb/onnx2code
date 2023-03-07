@@ -21,10 +21,10 @@ inline void gpackB(
     float* __restrict__ B_panel  // kc x nc
 ) {
     const int NP = nc / nr;
-    const int NPl = nc % nr;
+    // const int NPl = nc % nr;
 
-    if (NPl > 0)
-        memset(B_panel, 0, kc * nc * sizeof(float));
+    // if (NPl > 0)
+    //     memset(B_panel, 0, kc * nc * sizeof(float));
 
     for (int p = 0; p < NP; p++) {
         gpackB_panel<kc, nr, StrideCol, StrideRow>(B, B_panel);
