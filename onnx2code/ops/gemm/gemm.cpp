@@ -27,6 +27,8 @@ void gemm(
         for (int pc = 0; pc < K; pc += kc) {
             gpackB<kc, nc, nr, 1, N>((float*)B + pc * N + jc, B_panel);
 
+            int _kc = min(K - pc, kc);          // evitar que se pase el panel
+
             for (int ic = 0; ic < M; ic += mc) {
                 gpackA<mc, kc, mr, 1, K>((float*)A + ic * K + pc, A_panel);
 
@@ -35,7 +37,6 @@ void gemm(
 
                 for (int jr = 0; jr < _nc; jr += nr) {      // jr es el offset del panel de ancho nr (violeta)
                     for (int ir = 0; ir < _mc; ir += mr) {  // ir es el offset del panel de ancho mr (verde)
-                        int _kc = min(K - pc, kc);          // evitar que se pase el panel
                         int _nr = min(_nc - jr, nr);        // evitar que se pase el bloque
                         int _mr = min(_mc - ir, mr);        // evitar que se pase el bloque
 
