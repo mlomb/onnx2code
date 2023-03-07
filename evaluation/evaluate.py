@@ -6,18 +6,22 @@ import tensorflow as tf
 from keras import layers
 from measure import measure_all
 
+from onnx2code.ops.gemm import LoopTilingParams, set_tiling_params
+
 # Custom MNIST-like model
 input = tf.keras.Input([4096 * 64])
 out = tf.keras.layers.Lambda(lambda x: x)(input)
 
-input_shape = (256, 256)
+input_shape = (512, 512)
 
 model = keras.Sequential(
     [
         keras.Input(shape=input_shape),
-        layers.Dense(256, activation="relu"),
+        layers.Dense(512, activation="relu"),
     ]
 )
+
+set_tiling_params(LoopTilingParams(nc=4096, kc=256, mc=128, mr=4, nr=8))
 
 # Measure models
 data = measure_all(model, variations=["gemm-naive", "loop-tiling", "libxsmm"])

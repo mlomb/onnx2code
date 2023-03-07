@@ -22,15 +22,17 @@ model = tf.keras.Sequential(
 
 # nc, kc, mc, mr, nr
 nc_options = [4096]
-kc_options = [256, 512]
-mc_options = [256, 512]
-mr_options = [4, 8, 16]
-nr_options = [8, 4, 16]
+kc_options = [128, 256]
+mc_options = [128, 256]
+mr_options = [4, 8]
+nr_options = [4, 8]
+mv_options = [4]
+nu_options = [4]
 
-for nc, kc, mc, mr, nr in product(
-    nc_options, kc_options, mc_options, mr_options, nr_options
+for nc, kc, mc, mr, nr, mv, nu in product(
+    nc_options, kc_options, mc_options, mr_options, nr_options, mv_options, nu_options
 ):
-    set_tiling_params(LoopTilingParams(nc=nc, kc=kc, mc=mc, mr=mr, nr=nr))
+    set_tiling_params(LoopTilingParams(nc=nc, kc=kc, mc=mc, mr=mr, nr=nr, mv=mv, nu=nu))
 
     data = measure_all(model, variations=["loop-tiling"], measure_base=False)
 

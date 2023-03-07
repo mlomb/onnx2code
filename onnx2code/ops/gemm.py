@@ -185,6 +185,8 @@ class LoopTilingParams:
     mc: int  # Filas de bloque de A
     mr: int  # Filas de microkernel
     nr: int  # Columnas de microkernel
+    mv: int  # Filas de unit-update
+    nu: int  # Columnas de unit-update
 
 
 tiling_params = LoopTilingParams(
@@ -193,6 +195,8 @@ tiling_params = LoopTilingParams(
     mc=256,
     mr=4,
     nr=8,
+    mv=4,
+    nu=4,
 )
 
 
@@ -218,8 +222,8 @@ class GEMMLoopTiling(GEMM):
         mr = tiling_params.mr
         nr = tiling_params.nr
 
-        mv = 4
-        nu = 4
+        mv = tiling_params.mv
+        nu = tiling_params.nu
 
         source = f"gemm<{M},{K},{N},{nc},{kc},{mc},{mr},{nr},{mv},{nu}>(A, B, OUT);"
 
