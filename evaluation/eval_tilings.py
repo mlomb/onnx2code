@@ -10,6 +10,7 @@ from onnx2code.ops.gemm import LoopTilingParams, set_tiling_params
 FLOAT_SIZE = 4
 KB = 1024
 L1_SIZE = 32 * KB
+L2_SIZE = 256 * KB
 
 # Custom MNIST-like model
 input = tf.keras.Input([4096 * 64])
@@ -28,8 +29,8 @@ model = tf.keras.Sequential(
 nc_options = [4096]
 kc_options = [256]
 mc_options = [256]
-mr_options = [4, 8]
-nr_options = [4, 8]
+mr_options = [4]
+nr_options = [8]
 mv_options = [4]
 nu_options = [4]
 
@@ -42,14 +43,25 @@ for nc, kc, mc, mr, nr, mv, nu in product(
     B_sliver = nr * kc * FLOAT_SIZE
     A_sliver = mr * kc * FLOAT_SIZE
     AB = mr * nr * FLOAT_SIZE
-    total = A_sliver + B_sliver + AB
-    remaining = L1_SIZE - total
+    L1_total = A_sliver + B_sliver + AB
+    L1_remaining = L1_SIZE - L1_total
     print("L1:")
     print(f"\t{A_sliver=}")
     print(f"\t{B_sliver=}")
     print(f"\t{AB=}")
-    print(f"\t{total=}")
-    print(f"\t{remaining=}")
+    print(f"\t{L1_total=}")
+    print(f"\t{L1_remaining=}")
+
+    A_panel = mc * kc * FLOAT_SIZE
+    C_writeback = AB
+    L2_total = A_panel + B_sliver + C_writeback
+    L2_remaining = L2_SIZE - L2_total
+    print("\nL2:")
+    print(f"\t{A_panel=}")
+    print(f"\t{B_sliver=}")
+    print(f"\t{C_writeback=}")
+    print(f"\t{L2_total=}")
+    print(f"\t{L2_remaining=}")
 
     data = measure_all(model, variations=["loop-tiling"], measure_base=False)
 
