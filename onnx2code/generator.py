@@ -1,3 +1,4 @@
+from itertools import chain
 import os
 import re
 import warnings
@@ -16,9 +17,7 @@ from .tensor import TensorData, parse_tensors
 from .util import get_fixed_input_shapes
 
 REGISTER_ORDER = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]
-INFERENCE_SIGNATURE = (
-    "void __attribute__ ((noinline)) inference(const float* weights, const float* inputs, float* outputs)"
-)
+INFERENCE_SIGNATURE = "void __attribute__ ((noinline)) inference(const float* weights, const float* inputs, float* outputs)"
 
 
 class Generator:
@@ -224,7 +223,7 @@ class Generator:
             for asm_aux_function in impl.asm_aux_functions
         ]
 
-        source += "extern \"C\" {\n" + "\n\n".join(asm_aux_declarations) + "\n}\n\n"
+        source += 'extern "C" {\n' + "\n\n".join(asm_aux_declarations) + "\n}\n\n"
 
         # loading external files
         source += "// External files:\n\n"
@@ -244,8 +243,14 @@ class Generator:
 
         source += "// Auxiliary functions (C++):\n\n"
 
+        print(list(impl.cpp_aux_functions for impl in self.impls.keys()))
+
         cpp_aux_functions = list(
-            dict.fromkeys(*(impl.cpp_aux_functions for impl in self.impls.keys()))
+            dict.fromkeys(
+                chain.from_iterable(
+                    impl.cpp_aux_functions for impl in self.impls.keys()
+                )
+            )
         )
 
         source += "\n".join(cpp_aux_functions) + "\n" * 2
