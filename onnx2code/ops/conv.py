@@ -149,6 +149,7 @@ class ConvIm2col(Conv):
             (W - KW + 1 + pads_start[1] + pads_end[1] - (dilations[1] - 1) * (KW - 1))
             / strides[0]
         )
+        im2col_shape = [patch_stride, num_patches]
 
         bias_code = (
             ""
@@ -163,10 +164,14 @@ class ConvIm2col(Conv):
         """
         )
 
+        _N = F # weight_shape[0]
+        _M = patch_stride # weight_shape[1]
+        _K = im2col_shape[1]
+
         source = f"""
         // padding, dilations, strides
         // im2col
-        float im2col[200000];
+        float im2col[{np.prod(im2col_shape)}];
         int patch = 0;
         for(int c = 0; c < {C - KC + 1}; c++) {{
             for(int h = {-pads_start[0]}; h < {H - KH + 1 + pads_end[0] - (dilations[0] - 1) * (KH - 1)}; h += {strides[0]}) {{
@@ -200,8 +205,17 @@ class ConvIm2col(Conv):
                 }}
             }}
         }}
-        // gemm TODO: FALTA COMPLETAR ESTOS 3 NUMEROS
-        {call_GEMM(0,0,0,"im2col, W, OUT")}
+        // gemm ({self.Y.shape})
+        for(int row = 0; row < {_N}; row++) {{
+            for(int col = 0; col < {_K}; col++) {{
+                float sum = 0;
+                for(int i = 0; i < {_M}; i++) {{
+                    sum += W[row * {_M} + i] * im2col[i * {_K} + col];
+                }}
+                OUT[row * {_K} + col] = sum;
+            }}
+        }}
+        // {call_GEMM(1,2,3,"W, im2col, OUT")}
         // bias
         {bias_code}
         """
