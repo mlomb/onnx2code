@@ -164,8 +164,8 @@ class ConvIm2col(Conv):
         """
         )
 
-        _N = F # weight_shape[0]
-        _M = patch_stride # weight_shape[1]
+        _N = F  # weight_shape[0]
+        _M = patch_stride  # weight_shape[1]
         _K = im2col_shape[1]
 
         source = f"""
