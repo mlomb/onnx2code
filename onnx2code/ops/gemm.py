@@ -132,9 +132,10 @@ class GEMMAsm(GEMM):
 
         try:
             libxsmm_generator_process = subprocess.run(
-                generator_args,
+                " ".join(generator_args),
                 capture_output=True,
                 encoding="utf-8",
+                shell=True
             )
         except PermissionError:
             raise RuntimeError(f"libxsmm not found at '{LIBXSMM_PATH}'")
