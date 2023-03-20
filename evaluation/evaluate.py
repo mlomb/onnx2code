@@ -6,7 +6,7 @@ import tensorflow as tf
 from keras import layers
 from measure import measure_all
 
-from onnx2code.ops.gemm import LoopTilingParams, set_tiling_params
+from onnx2code.ops.gemm_tiling.GEMM import LoopTilingParams, set_tiling_params
 
 # Custom MNIST-like model
 input = tf.keras.Input([4096 * 64])

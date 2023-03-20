@@ -1,11 +1,10 @@
-from dataclasses import dataclass
 import subprocess
-from pathlib import Path
 from typing import Iterable
 
 from onnx2code.util import get_attribute
 
 from .operation import OpCall, Operation, OpImpl
+from .gemm_tiling.GEMM import external_paths_GEMM, call_GEMM
 
 
 class GEMM(Operation):
@@ -178,62 +177,13 @@ class GEMMAsm(GEMM):
         return OpImpl(lang="c", source=source, cpp_aux_functions=(aux_fn,))
 
 
-@dataclass
-class LoopTilingParams:
-    nc: int  # Columnas de panel de B
-    kc: int  # Filas de panel de B
-    mc: int  # Filas de bloque de A
-    mr: int  # Filas de microkernel
-    nr: int  # Columnas de microkernel
-    mv: int  # Filas de unit-update
-    nu: int  # Columnas de unit-update
-
-
-tiling_params = LoopTilingParams(
-    nc=4096,
-    kc=256,
-    mc=256,
-    mr=4,
-    nr=8,
-    mv=4,
-    nu=4,
-)
-
-
-def set_tiling_params(params: LoopTilingParams) -> None:
-    global tiling_params
-    tiling_params = params
-
-
 @GEMM.variant(["c", "loop-tiling"], priority=1)
 class GEMMLoopTiling(GEMM):
-    # def kernel(n: int, m: int) -> str:
-    #     pass
-
     def impl(self) -> OpImpl:
         M, K, N = self.N, self.M, self.K
 
         if self.hasC:
             raise NotImplementedError("hasC not supported")
-
-        nc = min(N, tiling_params.nc)
-        kc = tiling_params.kc
-        mc = tiling_params.mc
-        mr = tiling_params.mr
-        nr = tiling_params.nr
-
-        mv = tiling_params.mv
-        nu = tiling_params.nu
-
-        source = f"gemm<{M},{K},{N},{nc},{kc},{mc},{mr},{nr},{mv},{nu}>(A, B, OUT);"
-
-        external_paths = (
-            Path(__file__).parent / "gemm" / "gpackA.cpp",
-            Path(__file__).parent / "gemm" / "gpackB.cpp",
-            Path(__file__).parent / "gemm" / "microkernel_ref.cpp",
-            Path(__file__).parent / "gemm" / "microkernel_test.cpp",
-            Path(__file__).parent / "gemm" / "gemm.cpp",
-        )
 
         # unit_update_asm = ASMAuxFunction(
         #     signature="void unit_update(const float*, const float*, float*)",
@@ -249,7 +199,7 @@ class GEMMLoopTiling(GEMM):
 
         return OpImpl(
             lang="c",
-            source=source,
-            external_paths=external_paths,
+            source=call_GEMM(M, K, N, "A, B, OUT"),
+            external_paths=external_paths_GEMM,
             # asm_aux_functions=(unit_update_asm,),
         )
