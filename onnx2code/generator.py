@@ -228,9 +228,8 @@ class Generator:
         # loading external files
         source += "// External files:\n\n"
 
-        external_file_paths = set(
-            [path for impl in self.impls.keys() for path in impl.external_paths]
-        )
+        efp = [path for impl in self.impls.keys() for path in impl.external_paths]
+        external_file_paths = sorted(set(efp), key=efp.index)
 
         for path in external_file_paths:
             source += f"// {path}\n\n"
