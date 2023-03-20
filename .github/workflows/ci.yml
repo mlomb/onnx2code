@@ -33,11 +33,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Install gcc and nasm
-        run: sudo apt-get install -y gcc nasm
-
       - name: Install libxsmm
         run: |
           git clone https://github.com/libxsmm/libxsmm
@@ -45,6 +40,12 @@ jobs:
           git checkout 4e1aa5332123088916989651ae9b187ecba377dc
           make generator
           echo "$(pwd)/bin" >> $GITHUB_PATH
+          cd ..
+
+      - uses: actions/checkout@v3
+
+      - name: Install gcc and nasm
+        run: sudo apt-get install -y gcc nasm
 
       - name: Set up Python
         uses: actions/setup-python@v4
