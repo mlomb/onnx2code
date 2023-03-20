@@ -39,7 +39,6 @@ jobs:
           cd libxsmm
           git checkout 4e1aa5332123088916989651ae9b187ecba377dc
           make generator
-          echo "$(pwd)/bin" >> $GITHUB_PATH
           cd ..
 
       - uses: actions/checkout@v3
@@ -60,7 +59,9 @@ jobs:
         run: pipenv install --dev
 
       - name: Run tests
-        run: pipenv run make test
+        run: |
+          export PATH="$PATH:$GITHUB_WORKSPACE/libxsmm/bin"
+          pipenv run make test
 
   deploy_docker_image:
     needs: [style, test]
