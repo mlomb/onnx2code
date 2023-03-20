@@ -61,7 +61,7 @@ jobs:
 
       - name: Run tests
         run: |
-          export PATH="${PATH}:$GITHUB_WORKSPACE/onnx2code/libxsmm/bin"
+          export PATH="${PATH}:/home/runner/work/onnx2code/onnx2code/libxsmm/bin"
           pipenv run make test
 
   deploy_docker_image:
