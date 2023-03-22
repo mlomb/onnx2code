@@ -208,7 +208,7 @@ class Generator:
                 "#include <string.h>",
                 "#define min(a,b) ((a)<(b)?(a):(b))",
                 "#define max(a,b) ((a)>(b)?(a):(b))",
-                "",
+                "float im2col[50000000]; // TODO: do this correctly...",
                 "",
             ]
         )

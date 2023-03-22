@@ -152,16 +152,16 @@ class ConvIm2col(Conv):
         im2col_shape = [patch_stride, num_patches]
 
         bias_code = (
-            ""
-            if has_bias
-            else f"""
-        // bias
-        for (int f = 0; f < {F}; f++) {{
-            for (int i = 0; i < {num_patches}; i++) {{
-                output[f * {num_patches} + i] += biases[f];
+            f"""
+            // bias
+            for (int f = 0; f < {F}; f++) {{
+                for (int i = 0; i < {num_patches}; i++) {{
+                    OUT[f * {num_patches} + i] += B[f];
+                }}
             }}
-        }}
-        """
+            """
+            if has_bias
+            else ""
         )
 
         _N = F  # weight_shape[0]
@@ -171,7 +171,7 @@ class ConvIm2col(Conv):
         source = f"""
         // padding, dilations, strides
         // im2col
-        float im2col[{np.prod(im2col_shape)}];
+        // float im2col[{np.prod(im2col_shape)}];
         int patch = 0;
         for(int c = 0; c < {C - KC + 1}; c++) {{
             for(int h = {-pads_start[0]}; h < {H - KH + 1 + pads_end[0] - (dilations[0] - 1) * (KH - 1)}; h += {strides[0]}) {{
@@ -216,7 +216,6 @@ class ConvIm2col(Conv):
             }}
         }}
         // {call_GEMM(1,2,3,"W, im2col, OUT")}
-        // bias
         {bias_code}
         """
 
