@@ -1,10 +1,11 @@
 import setup  # noqa # isort:skip
 
 from itertools import product
-import numpy as np
 
+import numpy as np
 import tensorflow as tf
 from measure import measure_all
+
 from onnx2code.ops.gemm import LoopTilingParams, set_tiling_params
 
 FLOAT_SIZE = 4

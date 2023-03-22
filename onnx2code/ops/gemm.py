@@ -3,8 +3,8 @@ from typing import Iterable
 
 from onnx2code.util import get_attribute
 
+from .gemm_tiling.GEMM import call_GEMM, external_paths_GEMM
 from .operation import OpCall, Operation, OpImpl
-from .gemm_tiling.GEMM import external_paths_GEMM, call_GEMM
 
 
 class GEMM(Operation):
@@ -135,7 +135,7 @@ class GEMMAsm(GEMM):
                 " ".join(generator_args),
                 capture_output=True,
                 encoding="utf-8",
-                shell=True
+                shell=True,
             )
         except PermissionError:
             raise RuntimeError(f"libxsmm not found at '{LIBXSMM_PATH}'")

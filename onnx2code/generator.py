@@ -1,8 +1,8 @@
-from itertools import chain
 import os
 import re
 import warnings
 from collections import defaultdict
+from itertools import chain
 from pathlib import Path
 from textwrap import dedent, indent
 

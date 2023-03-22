@@ -1,6 +1,6 @@
-import numpy as np
 import argparse
 
+import numpy as np
 
 # Read a single int from args
 parser = argparse.ArgumentParser()

@@ -1,5 +1,7 @@
 from math import ceil
+
 import numpy as np
+
 from onnx2code.ops.gemm_tiling.GEMM import call_GEMM, external_paths_GEMM
 from onnx2code.util import (
     compute_strides,
