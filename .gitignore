@@ -8,3 +8,4 @@ __pycache__/
 **/tmp
 data
 output/
+results.csv

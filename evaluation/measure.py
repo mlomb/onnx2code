@@ -53,6 +53,7 @@ def measure_onnx2code(
         for _ in tqdm(
             range(runs),
             desc="onnx2code" if not variation_name else f"onnx2code-{variation_name}",
+            leave=False,
         ):
             start = perf_counter_ns()
             service.inference(inputs)
