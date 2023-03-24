@@ -15,9 +15,9 @@ template <
     int nu   // Columnas de unit update
     >
 void gemm(
-    const float* __restrict__ A,  // MxN
-    const float* __restrict__ B,  // NxK
-    float* __restrict__ OUT      // MxK
+    const float* __restrict__ A,  // MxK
+    const float* __restrict__ B,  // KxN
+    float* __restrict__ OUT      // MxN
 ) {
     memset(OUT, 0, M * N * sizeof(float));
 
