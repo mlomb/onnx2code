@@ -45,7 +45,7 @@ inline void test_microkernel(
             }
         }
 
-        // advance one row of A and one column of B
+        // advance one column of A and one row of B
         A_kernel += mr;
         B_kernel += nr;
     }
