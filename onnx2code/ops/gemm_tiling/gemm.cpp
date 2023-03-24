@@ -44,8 +44,8 @@ void gemm(
                 int _nc = min(N - jc, nc);  // evitar que se pase "matrices grandes?"
                 int _mc = min(M - ic, mc);  // evitar que se pase el panel
 
-                for (int jr = 0; jr < _nc; jr += nr) {      // jr es el offset del panel de ancho nr (violeta)
-                    for (int ir = 0; ir < _mc; ir += mr) {  // ir es el offset del panel de ancho mr (verde)
+                for (int jr = 0; jr < _nc; jr += nr) {      // jr es el offset del sliver de ancho nr (violeta)
+                    for (int ir = 0; ir < _mc; ir += mr) {  // ir es el offset del sliver de ancho mr (verde)
                         // (_mr x _kc) * (_kc x _nr)
 
                         const float* A_kernel = A_panel + ir * kc;  // (_mr x _kc) column major
