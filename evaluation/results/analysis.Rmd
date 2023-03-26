@@ -1,0 +1,61 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(ggplot2)
+library(extrafont)
+
+theme_set(theme(text=element_text(family="LM Roman 10")))
+```
+
+```{r}
+datos_6th_skylake <- read.csv("C:/Users/mlomb/Desktop/onnx2code/evaluation/results/6th-skylake.csv")
+datos_6th_skylake$gen <- rep("Skylake (6th)", nrow(datos_6th_skylake))
+
+datos_10th_comet_lake <- read.csv("C:/Users/mlomb/Desktop/onnx2code/evaluation/results/10th-comet-lake.csv")
+datos_10th_comet_lake$gen <- rep("Comet Lake (10th)", nrow(datos_10th_comet_lake))
+
+datos_10th_ice_lake <- read.csv("C:/Users/mlomb/Desktop/onnx2code/evaluation/results/10th-ice-lake.csv")
+datos_10th_ice_lake$gen <- rep("Ice Lake (10th)", nrow(datos_10th_ice_lake))
+
+datos_11th_tiger_lake <- read.csv("C:/Users/mlomb/Desktop/onnx2code/evaluation/results/11th-tiger-lake.csv")
+datos_11th_tiger_lake$gen <- rep("Tiger Lake (11th)", nrow(datos_11th_tiger_lake))
+
+topN = 500
+
+datos <- rbind(
+  datos_6th_skylake[order(datos_6th_skylake$time, decreasing=F),][1:topN,],
+  datos_10th_comet_lake[order(datos_10th_comet_lake$time, decreasing=F),][1:topN,],
+  datos_10th_ice_lake[order(datos_10th_ice_lake$time, decreasing=F),][1:topN,],
+  datos_11th_tiger_lake[order(datos_11th_tiger_lake$time, decreasing=F),][1:topN,]
+)
+datos$mrnr <- datos$mr * datos$nr
+datos$l1 <- datos$kc * datos$nr * 4
+datos$l2 <- datos$kc * datos$mc * 4
+datos$l3 <- datos$nc * datos$kc * 4
+```
+
+
+```{r}
+ggplot(datos, aes(x=as.factor((mv*nu)),y=time))+
+  geom_boxplot() +
+  ylab("Tiempo (ms)") +
+  xlab("mv * nu") +
+  facet_grid(~gen)
+ggsave("mv_x_nu.pdf", width = 6, height = 4, device=cairo_pdf)
+```
+
+
+```{r}
+ggplot(datos, aes(x=as.factor((mr*nr)),y=time))+
+  geom_boxplot() +
+  ylab("Tiempo (ms)") +
+  facet_grid(~gen)
+ggsave("mv_x_nu.pdf", width = 12, height = 4, device=cairo_pdf)
+```
+
+```{r}
+
+```
