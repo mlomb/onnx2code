@@ -66,7 +66,13 @@ results = pd.DataFrame(columns=["nc", "kc", "mc", "mr", "nr", "mv", "nu", "time"
 for p in tqdm(params, desc="Tiling params"):
     set_tiling_params(p)
 
-    data = measure_all(model, variations=["loop-tiling"], measure_base=False, runs=300)
+    data = measure_all(
+        model,
+        variations=["loop-tiling"],
+        measure_base=False,
+        runs=300,
+        tqdm_leave=False,
+    )
 
     assert len(data) == 1
     result = data[next(iter(data.keys()))]

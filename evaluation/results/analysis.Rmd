@@ -4,6 +4,7 @@ output: html_notebook
 ---
 
 ```{r}
+options(warn=-1)
 library(ggplot2)
 library(extrafont)
 
@@ -23,7 +24,7 @@ datos_10th_ice_lake$gen <- rep("Ice Lake (10th)", nrow(datos_10th_ice_lake))
 datos_11th_tiger_lake <- read.csv("C:/Users/mlomb/Desktop/onnx2code/evaluation/results/11th-tiger-lake.csv")
 datos_11th_tiger_lake$gen <- rep("Tiger Lake (11th)", nrow(datos_11th_tiger_lake))
 
-topN = 500
+topN = 500 # nrow(datos_6th_skylake)
 
 datos <- rbind(
   datos_6th_skylake[order(datos_6th_skylake$time, decreasing=F),][1:topN,],
@@ -31,20 +32,16 @@ datos <- rbind(
   datos_10th_ice_lake[order(datos_10th_ice_lake$time, decreasing=F),][1:topN,],
   datos_11th_tiger_lake[order(datos_11th_tiger_lake$time, decreasing=F),][1:topN,]
 )
+datos$gen <- factor(datos$gen, levels=c("Skylake (6th)", "Comet Lake (10th)", "Ice Lake (10th)", "Tiger Lake (11th)"))
 datos$mrnr <- datos$mr * datos$nr
 datos$l1 <- datos$kc * datos$nr * 4
 datos$l2 <- datos$kc * datos$mc * 4
 datos$l3 <- datos$nc * datos$kc * 4
-```
 
-
-```{r}
-ggplot(datos, aes(x=as.factor((mv*nu)),y=time))+
-  geom_boxplot() +
-  ylab("Tiempo (ms)") +
-  xlab("mv * nu") +
-  facet_grid(~gen)
-ggsave("mv_x_nu.pdf", width = 6, height = 4, device=cairo_pdf)
+filtrados_mrnr <- datos[
+  ((datos$gen == "Skylake (6th)" | datos$gen == "Comet Lake (10th)") & datos$mrnr == 64) |
+  ((datos$gen == "Ice Lake (10th)" | datos$gen == "Tiger Lake (11th)") & datos$mrnr == 128)
+,]
 ```
 
 
@@ -52,10 +49,27 @@ ggsave("mv_x_nu.pdf", width = 6, height = 4, device=cairo_pdf)
 ggplot(datos, aes(x=as.factor((mr*nr)),y=time))+
   geom_boxplot() +
   ylab("Tiempo (ms)") +
+  xlab(expression("m"[r] * " × n"[r])) +
   facet_grid(~gen)
-ggsave("mv_x_nu.pdf", width = 12, height = 4, device=cairo_pdf)
+ggsave("mr_x_nr.pdf", width = 8, height = 4, device=cairo_pdf)
+```
+
+
+```{r}
+ggplot(filtrados_mrnr, aes(x=factor(l1, labels=c("2KB","4KB","8KB","16KB","32KB","64KB")),y=time))+
+  geom_boxplot() +
+  ylab("Tiempo (ms)") +
+  xlab(expression("k"[c] * " × n"[r] * " × 4")) +
+  facet_grid(~gen)
+ggsave("l1.pdf", width = 9, height = 4, device=cairo_pdf)
 ```
 
 ```{r}
-
+ggplot(filtrados_mrnr, aes(x=factor(l2, labels=c("16KB","32KB","64KB","128KB","256KB","512KB","1MB")),y=time))+
+  geom_boxplot() +
+  ylab("Tiempo (ms)") +
+  xlab(expression("k"[c] * " × m"[c] * " × 4")) +
+  facet_grid(~gen)
+ggsave("l2.pdf", width = 12, height = 4, device=cairo_pdf)
 ```
+

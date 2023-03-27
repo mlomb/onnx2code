@@ -1,0 +1,47 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(ggplot2)
+library(extrafont)
+
+theme_set(theme(text=element_text(family="LM Roman 10")))
+```
+
+```{r}
+datos <- read.csv("C:/Users/mlomb/Desktop/onnx2code/evaluation/results_gemm.csv")
+datos$runtime <- factor(datos$runtime, labels=c("naïve", "libxsmm", "onnx2code", "onnxruntime", "tensorflow"))
+
+datosCON <- datos[datos$runtime == "onnx2code",]
+datosSIN <- datos[datos$runtime != "onnx2code",]
+```
+
+
+```{r}
+ggplot(NULL, aes(x=MNK,y=time_mean, colour=runtime)) +
+  geom_line(data=datosSIN, size=0.4) +
+  geom_line(data=datosCON, size=1) +
+  geom_point(data=datosSIN, size=1) +
+  geom_point(data=datosCON, size=1.3) +
+  #geom_errorbar(data=datosSIN, aes(ymin=time_mean-time_std, ymax=time_mean+time_std)) +
+  xlab("M=K=N") +
+  ylab("Tiempo (ms, log scale)") +
+  scale_y_log10() + labs(color='Runtime') +
+  scale_x_continuous(breaks = pretty(datos$MNK, n = 15)) 
+ggsave("gemm.pdf", width = 8, height = 4, device=cairo_pdf)
+```
+
+
+```{r}
+ggplot(datos, aes(x=as.factor((mr*nr)),y=time))+
+  geom_boxplot() +
+  ylab("Tiempo (ms)") +
+  facet_grid(~gen)
+ggsave("mv_x_nu.pdf", width = 12, height = 4, device=cairo_pdf)
+```
+
+```{r}
+
+```

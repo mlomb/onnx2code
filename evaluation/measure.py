@@ -14,13 +14,18 @@ from onnx2code.result import ModelResult
 from onnx2code.service import ModelService, TensorsMap
 
 
-def measure_tf(tf_model: tf.keras.Model, inputs: TensorsMap, runs: int) -> list[int]:
+def measure_tf(
+    tf_model: tf.keras.Model,
+    inputs: TensorsMap,
+    runs: int,
+    tqdm_leave: bool = True,
+) -> list[int]:
     times = []
 
     # ⚠️ Make sure to use graph execution and NOT eager execution
     graph_model = tf.function(tf_model)
 
-    for _ in tqdm(range(runs), desc="tensorflow"):
+    for _ in tqdm(range(runs), desc="tensorflow", leave=tqdm_leave):
         start = perf_counter_ns()
         graph_model(inputs)
         end = perf_counter_ns()
@@ -30,12 +35,15 @@ def measure_tf(tf_model: tf.keras.Model, inputs: TensorsMap, runs: int) -> list[
 
 
 def measure_onnxruntime(
-    model_proto: onnx.ModelProto, inputs: TensorsMap, runs: int
+    model_proto: onnx.ModelProto,
+    inputs: TensorsMap,
+    runs: int,
+    tqdm_leave: bool = True,
 ) -> list[int]:
     times = []
     ort_sess = onnxruntime.InferenceSession(model_proto.SerializeToString())
 
-    for _ in tqdm(range(runs), desc="onnxruntime"):
+    for _ in tqdm(range(runs), desc="onnxruntime", leave=tqdm_leave):
         start = perf_counter_ns()
         ort_sess.run(None, inputs)
         end = perf_counter_ns()
@@ -45,7 +53,11 @@ def measure_onnxruntime(
 
 
 def measure_onnx2code(
-    model_result: ModelResult, inputs: TensorsMap, runs: int, variation_name: str = ""
+    model_result: ModelResult,
+    inputs: TensorsMap,
+    runs: int,
+    variation_name: str = "",
+    tqdm_leave: bool = True,
 ) -> list[int]:
     times = []
 
@@ -53,7 +65,7 @@ def measure_onnx2code(
         for _ in tqdm(
             range(runs),
             desc="onnx2code" if not variation_name else f"onnx2code-{variation_name}",
-            leave=False,
+            leave=tqdm_leave,
         ):
             start = perf_counter_ns()
             service.inference(inputs)
@@ -69,6 +81,7 @@ def measure_all(
     variations: list[str] = [],
     *,
     measure_base: bool = True,
+    tqdm_leave: bool = True,
 ) -> dict[str, list[float]]:
     """
     Measure the inference time of the given model in tf, onnxruntime and onnx2code.
@@ -76,6 +89,7 @@ def measure_all(
     Time in milliseconds.
     """
     model_proto, _ = tf2onnx.convert.from_keras(tf_model)
+    onnx.save(model_proto, "debug.onnx")
 
     warmup_runs = int(min(100, max(5, runs * 0.1)))
     total = runs + warmup_runs
@@ -94,13 +108,19 @@ def measure_all(
         }
 
         results[f"onnx2code-{variation}"] = postprocess(
-            measure_onnx2code(model_variation, inputs, total, variation)
+            measure_onnx2code(
+                model_variation, inputs, total, variation, tqdm_leave=tqdm_leave
+            )
         )
 
     return results | (
         {
-            "tensorflow": postprocess(measure_tf(tf_model, inputs, total)),
-            "onnxruntime": postprocess(measure_onnxruntime(model_proto, inputs, total)),
+            "tensorflow": postprocess(
+                measure_tf(tf_model, inputs, total, tqdm_leave=tqdm_leave)
+            ),
+            "onnxruntime": postprocess(
+                measure_onnxruntime(model_proto, inputs, total, tqdm_leave=tqdm_leave)
+            ),
         }
         if measure_base
         else {}
