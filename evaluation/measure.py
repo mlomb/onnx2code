@@ -120,9 +120,9 @@ def measure_all(
 
     return results | (
         {
-            #"tensorflow": postprocess(
-            #    measure_tf(tf_model, inputs, total, tqdm_leave=tqdm_leave)
-            #),
+            "tensorflow": postprocess(
+                measure_tf(tf_model, inputs, total, tqdm_leave=tqdm_leave)
+            ),
             "onnxruntime": postprocess(
                 measure_onnxruntime(model_proto, inputs, total, tqdm_leave=tqdm_leave)
             ),

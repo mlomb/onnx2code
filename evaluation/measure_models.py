@@ -1,9 +1,7 @@
 import setup  # noqa # isort:skip
 
-import keras
 import numpy as np
 import pandas as pd
-from keras import layers
 import onnx
 from measure import measure_all
 from tqdm import tqdm
@@ -23,7 +21,7 @@ models = [
     "../data/vision/classification/squeezenet/model/squeezenet1.1-7.onnx",
     "../data/vision/body_analysis/emotion_ferplus/model/emotion-ferplus-8.onnx",
     "../data/vision/classification/inception_and_googlenet/inception_v2/model/inception-v2-7.onnx",
-    "../data/vision/classification/resnet/model/resnet50-caffe2-v1-9.onnx"
+    "../data/vision/classification/resnet/model/resnet50-caffe2-v1-9.onnx",
 ]
 
 for model in tqdm(models):

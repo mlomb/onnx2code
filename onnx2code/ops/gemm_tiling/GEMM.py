@@ -40,7 +40,7 @@ external_paths_GEMM = (
 
 
 def call_GEMM(M: int, K: int, N: int, params: str) -> str:
-    nc = min(2**math.ceil(math.log2(N)), tiling_params.nc)
+    nc = min(2 ** math.ceil(math.log2(N)), tiling_params.nc)
     kc = tiling_params.kc
     mc = tiling_params.mc
     mr = tiling_params.mr
