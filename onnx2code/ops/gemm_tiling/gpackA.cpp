@@ -21,9 +21,9 @@
 //         kc
 // mp = 2
 
-template <int mr, int kc, int StrideCol, int StrideRow>
+template <int kc, int mr, int StrideCol, int StrideRow>
 inline void gpackA_panel(
-    float* __restrict__ A,
+    const float* __restrict__ A,
     float* __restrict__ A_panel  // mr x kc
 ) {
     for (int c = 0; c < kc; c++) {
@@ -38,22 +38,61 @@ inline void gpackA_panel(
     }
 }
 
-template <int mc, int kc, int mr, int StrideCol, int StrideRow>
+template <int kc, int mc, int mr, int StrideCol, int StrideRow>
 inline void gpackA(
-    float* __restrict__ A,
+    const float* __restrict__ A,
     float* __restrict__ A_panel  // mc x kc
 ) {
-    const int MP = mc / mr;
-    // const int MPl = mc % mr;
-
-    // if (MPl > 0)
-    //     memset(A_panel, 0, mc * kc * sizeof(float));
-
-    for (int p = 0; p < MP; p++) {
-        gpackA_panel<mr, kc, StrideCol, StrideRow>(A, A_panel);
+    for (int p = 0; p < mc; p += mr) {
+        gpackA_panel<kc, mr, StrideCol, StrideRow>(A, A_panel);
 
         // advance panel
         A_panel += mr * kc;
         A += mr * StrideRow;
+    }
+}
+
+// Edge case
+
+template <int mr, int StrideCol, int StrideRow>
+inline void gpackA_panel_edge(
+    int _kc,
+    int _mr,
+    const float* __restrict__ A,
+    float* __restrict__ A_panel  // mr x kc
+) {
+    for (int c = 0; c < _kc; c++) {
+        // copy column of mr
+        for (int r = 0; r < _mr; r++) {
+            A_panel[r] = A[r * StrideRow];
+        }
+
+        // advance column
+        A_panel += mr;
+        A += StrideCol;
+    }
+}
+template <int kc, int mc, int mr, int StrideCol, int StrideRow>
+inline void gpackA_edge(
+    int _kc,
+    int _mc,
+    const float* __restrict__ A,
+    float* __restrict__ A_panel  // mc x kc
+) {
+    const int MP = _mc / mr;
+    const int MPl = _mc % mr;
+
+    memset(A_panel, 0, mc * kc * sizeof(float));
+
+    for (int p = 0; p < MP; p++) {
+        gpackA_panel_edge<mr, StrideCol, StrideRow>(_kc, mr, A, A_panel);
+
+        // advance panel
+        A_panel += mr * kc;
+        A += mr * StrideRow;
+    }
+
+    if (MPl != 0) {
+        gpackA_panel_edge<mr, StrideCol, StrideRow>(_kc, MPl, A, A_panel);
     }
 }

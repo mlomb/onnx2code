@@ -1,8 +1,8 @@
 template <
     // matrix sizes
     int M,
-    int N,
     int K,
+    int N,
 
     int nc,  // Columnas de panel de B
     int kc,  // Filas de panel de B
@@ -17,39 +17,44 @@ template <
 void gemm(
     const float* __restrict__ A,  // MxK
     const float* __restrict__ B,  // KxN
-    float* __restrict__ OUT      // MxN
+    float* __restrict__ OUT       // MxN
 ) {
     memset(OUT, 0, M * N * sizeof(float));
 
-    // Si no se cumplen, las multiplicaciones de microkernel acceden
-    // a memoria inválida en los edge cases
-    // Podría solucionarse agregando un sliver más a A_panel y B_panel
-    static_assert(mc % mr == 0, "must be conforming");
-    static_assert(nc % nr == 0, "must be conforming");
-
-    float A_panel[mc * kc];
-    float B_panel[nc * kc];
+    float A_block[(mc + mr) * kc];
+    float B_panel[(nc + nr) * kc];
 
     float AB_microkernel[mr * nr];
 
     for (int jc = 0; jc < N; jc += nc) {
-        for (int pc = 0; pc < K; pc += kc) {
-            gpackB<kc, nc, nr, 1, N>((float*)B + pc * N + jc, B_panel);
+        int _nc = min(N - jc, nc);  // evitar que se pase "matrices grandes?"
 
+        for (int pc = 0; pc < K; pc += kc) {
             int _kc = min(K - pc, kc);  // evitar que se pase el panel
 
-            for (int ic = 0; ic < M; ic += mc) {
-                gpackA<mc, kc, mr, 1, K>((float*)A + ic * K + pc, A_panel);
+            if (_kc < kc || _nc < nc || true) {
+                gpackB_edge<kc, nc, nr, 1, N>(_kc, _nc, (float*)B + pc * N + jc, B_panel);
+            } else {
+                gpackB<kc, nc, nr, 1, N>((float*)B + pc * N + jc, B_panel);
+            }
 
-                int _nc = min(N - jc, nc);  // evitar que se pase "matrices grandes?"
+            for (int ic = 0; ic < M; ic += mc) {
                 int _mc = min(M - ic, mc);  // evitar que se pase el panel
+
+                if (_kc < kc || _mc < mc) {
+                    gpackA_edge<kc, mc, mr, 1, K>(_kc, _mc, (float*)A + ic * K + pc, A_block);
+                } else {
+                    gpackA<kc, mc, mr, 1, K>((float*)A + ic * K + pc, A_block);
+                }
+
+                // fprintf(stderr, "jc=%d pc=%d ic=%d _kc=%d _nc=%d, _mc=%d\n", jc, pc, ic, _kc, _nc, _mc);
 
                 for (int jr = 0; jr < _nc; jr += nr) {      // jr es el offset del sliver de ancho nr (violeta)
                     for (int ir = 0; ir < _mc; ir += mr) {  // ir es el offset del sliver de ancho mr (verde)
-                        // (_mr x _kc) * (_kc x _nr)
+                        // (_mr x kc) * (kc x _nr)
 
-                        const float* A_kernel = A_panel + ir * kc;  // (_mr x _kc) column major
-                        const float* B_kernel = B_panel + jr * kc;  // (_kc x _nr) row major
+                        const float* A_kernel = A_block + ir * kc;  // (mr x kc) column major
+                        const float* B_kernel = B_panel + jr * kc;  // (kc x nr) row major
 
                         // ref_microkernel<mr, nr, kc, N>(A_kernel, B_kernel, AB_microkernel);
 
