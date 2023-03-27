@@ -11,7 +11,7 @@ from tqdm import tqdm
 from onnx2code.ops.gemm_tiling.GEMM import LoopTilingParams, set_tiling_params
 
 # should be set to the best
-set_tiling_params(LoopTilingParams(nc=4096, kc=256, mc=64, mr=4, nr=16, mv=4, nu=4))
+set_tiling_params(LoopTilingParams(nc=4096, kc=256, mc=64, mr=4, nr=32, mv=2, nu=4))
 
 SIZES = 2 ** np.arange(8, 10)
 VARIATIONS = ["gemm-naive", "loop-tiling", "libxsmm"]
