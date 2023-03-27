@@ -1,6 +1,8 @@
 # onnx2code
 
-Generate plain C/ASM code for inference of ONNX models without dependencies
+Generate plain C++ code for inference of ONNX models without dependencies
+
+This project was made as an alternative to a final exam for the assignment "Computer Organization II". You can read the writeup in [docs/TP Final onnx2code.pdf](docs/TP%20Final%20onnx2code.pdf) (in Spanish).
 
 ## Model support
 
@@ -44,16 +46,16 @@ Only `float` data type is supported.
 We provide a ready to use [Docker image](https://hub.docker.com/r/mlomb/onnx2code):
 
 ```sh
-docker run --rm -it -v $pwd/mnist.onnx:/app/input.onnx:ro -v $pwd/output:/app/output:rw mlomb/onnx2code:latest --variations=asm,c --checks=3
+docker run --rm -it -v $pwd/mnist.onnx:/app/input.onnx:ro -v $pwd/output:/app/output:rw mlomb/onnx2code:latest --variations=im2col,loop-tiling --checks=3
 ```
 
-The command above will generate C and ASM code for the `mnist.onnx` model in the `output` folder.
+The command above will generate C++ code for the `mnist.onnx` model in the `output` folder.
 
 ## Setting up locally
 
 ### Prerequisites
 
-* gcc, nasm (required if checking models)
+* gcc (required if checking models)
 * Python 3.10
 * [pipenv](https://pypi.org/project/pipenv/)
 
@@ -64,5 +66,5 @@ Clone and install dependencies with `pipenv install`.
 To generate code from an ONNX model, run the following command inside a pipenv shell:
 
 ```sh
-python -m onnx2code --variation=asm,c mnist.onnx output_folder --checks=3
+python -m onnx2code --variation=im2col,loop-tiling mnist.onnx output_folder --checks=3
 ```
