@@ -89,7 +89,6 @@ def measure_all(
     Time in milliseconds.
     """
     model_proto, _ = tf2onnx.convert.from_keras(tf_model)
-    onnx.save(model_proto, "debug.onnx")
 
     warmup_runs = int(min(100, max(5, runs * 0.1)))
     total = runs + warmup_runs

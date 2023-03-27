@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from keras import layers
 from measure import measure_all
+from tqdm import tqdm
 
 from onnx2code.ops.gemm_tiling.GEMM import LoopTilingParams, set_tiling_params
 
@@ -18,7 +19,7 @@ VARIATIONS = ["gemm-naive", "loop-tiling", "libxsmm"]
 
 results = pd.DataFrame(columns=["MNK", "runtime", "time_mean", "time_std"])
 
-for x in range(256, 1280, 32):
+for x in tqdm(range(256, 1280, 32)):
     model = keras.Sequential(
         [
             keras.Input(shape=(x, x)),
@@ -26,7 +27,7 @@ for x in range(256, 1280, 32):
         ]
     )
 
-    result = measure_all(model, variations=VARIATIONS, runs=300)
+    result = measure_all(model, variations=VARIATIONS, runs=300, tqdm_leave=False)
 
     for var, times in result.items():
         entry = {
