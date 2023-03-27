@@ -82,13 +82,18 @@ def measure_all(
     *,
     measure_base: bool = True,
     tqdm_leave: bool = True,
+    onnx_model: onnx.ModelProto | None = None,
 ) -> dict[str, list[float]]:
     """
     Measure the inference time of the given model in tf, onnxruntime and onnx2code.
 
     Time in milliseconds.
     """
-    model_proto, _ = tf2onnx.convert.from_keras(tf_model)
+    if tf_model is not None:
+        model_proto, _ = tf2onnx.convert.from_keras(tf_model)
+        # onnx.save(model_proto, "debug.onnx")
+    else:
+        model_proto = onnx_model
 
     warmup_runs = int(min(100, max(5, runs * 0.1)))
     total = runs + warmup_runs
@@ -100,6 +105,7 @@ def measure_all(
 
     for variation in variations:
         model_variation = Generator(model_proto, variations=[variation]).generate()
+        # print(model_variation.source_c)
 
         inputs = {
             name: np.random.random_sample(shape).astype(np.float32) * 2 - 1
@@ -114,9 +120,9 @@ def measure_all(
 
     return results | (
         {
-            "tensorflow": postprocess(
-                measure_tf(tf_model, inputs, total, tqdm_leave=tqdm_leave)
-            ),
+            #"tensorflow": postprocess(
+            #    measure_tf(tf_model, inputs, total, tqdm_leave=tqdm_leave)
+            #),
             "onnxruntime": postprocess(
                 measure_onnxruntime(model_proto, inputs, total, tqdm_leave=tqdm_leave)
             ),
