@@ -18,7 +18,7 @@ VARIATIONS = ["gemm-naive", "loop-tiling", "libxsmm"]
 
 results = pd.DataFrame(columns=["MNK", "runtime", "time_mean", "time_std"])
 
-for x in range(256, 4096, 32):
+for x in range(256, 1280, 32):
     model = keras.Sequential(
         [
             keras.Input(shape=(x, x)),
