@@ -11,7 +11,7 @@ theme_set(theme(text=element_text(family="LM Roman 10")))
 ```
 
 ```{r}
-datos <- read.csv("C:/Users/mlomb/Desktop/onnx2code/evaluation/results_gemm.csv")
+datos <- read.csv("C:/Users/mlomb/Desktop/onnx2code/evaluation/results_gemm/10th.csv")
 datos$runtime <- factor(datos$runtime, labels=c("naïve", "libxsmm", "onnx2code", "onnxruntime", "tensorflow"))
 
 datosCON <- datos[datos$runtime == "onnx2code",]
@@ -34,14 +34,3 @@ ggsave("gemm.pdf", width = 8, height = 4, device=cairo_pdf)
 ```
 
 
-```{r}
-ggplot(datos, aes(x=as.factor((mr*nr)),y=time))+
-  geom_boxplot() +
-  ylab("Tiempo (ms)") +
-  facet_grid(~gen)
-ggsave("mv_x_nu.pdf", width = 12, height = 4, device=cairo_pdf)
-```
-
-```{r}
-
-```
