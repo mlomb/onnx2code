@@ -53,7 +53,7 @@ class Conv(Operation):
         )
 
 
-@Conv.variant("c", priority=1)
+@Conv.variant(["c", "conv-naive"], priority=1)
 class ConvC(Conv):
     def impl(self) -> OpImpl:
         # onnx is NCHW
@@ -217,7 +217,7 @@ class ConvIm2col(Conv):
                 OUT[row * {_K} + col] = sum;
             }}
         }}
-        // {call_GEMM(1,2,3,"W, im2col, OUT")}
+        //{call_GEMM(_N, _M, _K,"W, im2col, OUT")}
         {bias_code}
         """
 

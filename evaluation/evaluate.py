@@ -14,11 +14,10 @@ out = tf.keras.layers.Lambda(lambda x: x)(input)
 
 input_shape = (512, 512)
 
-M = 23
-K = 37
-N = 521
+M = 4
+K = 16
+N = 64009
 
-# 
 
 model = keras.Sequential(
     [
@@ -30,7 +29,7 @@ model = keras.Sequential(
 set_tiling_params(LoopTilingParams(nc=4096, kc=256, mc=128, mr=4, nr=8, mv=4, nu=4))
 
 # Measure models
-data = measure_all(model, variations=["loop-tiling"])
+data = measure_all(model, variations=["loop-tiling", "gemm-naive"])
 
 # Plot results
 plt.boxplot(data.values(), labels=data.keys())
